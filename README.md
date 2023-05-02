@@ -8,7 +8,7 @@ Toxicity meter allows measuring the toxicity of generative models based on the o
 Basic usage:
 - Installation of required packages
     ```bash
-    pip install requirements.txt
+    pip install -r requirements.txt
     ```
 
 - Selection of models to be used by 🤗 HuggingFace to generate text and measure toxicity respectively
