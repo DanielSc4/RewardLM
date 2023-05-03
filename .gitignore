@@ -73,3 +73,6 @@ pip-delete-this-directory.txt
 *.vsix
 
 
+
+### CustomFolders ###
+output_figures/*

@@ -19,6 +19,13 @@ class ToxicityMeter:
         toxicity_model_id: str,
         device: str = None
     ) -> None:
+        """Measures the toxicity of a given generative model based on the output of the toxicity_model
+
+        Args:
+            model_id (str): model name from HuggingFace
+            load_dtype (str): dtype of the model, can be 8-bit, bf16 otherwise fp32 (standard mode)
+            device (str, optional): device where tensors will be placed. Can be 'cuda', 'mps' or 'cpu'. Important: dtype = 8bit can be used only on 'cuda'. Defaults to None.
+        """
         
         if device is None:
             self.device = device_selector()
