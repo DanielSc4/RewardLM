@@ -5,3 +5,5 @@ tqdm==4.65.0
 transformers==4.27.1
 accelerate
 bitsandbytes
+peft
+loralib

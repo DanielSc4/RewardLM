@@ -22,7 +22,7 @@ Basic usage:
     load_dtype = '8-bit'
     toxicity_meter = ToxicityMeter(
         model_id = model_id,
-        load_dtype = 'fp32', # can be ['8-bit', 'bf16',]
+        load_dtype = 'fp32', # can be ['8-bit', 'bf16', 'fp32']
         toxicity_model_id = reward_model_id,
     )
 
