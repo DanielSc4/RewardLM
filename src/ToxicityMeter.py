@@ -119,20 +119,20 @@ class ToxicityMeter:
     def measure_toxicity(
             self,
             loader: torch.utils.data.DataLoader,
-            generatation_config: GenerationConfig = None, 
+            generation_config: GenerationConfig = None, 
             print_response: bool = False,
         ):
         """Main function for measuring the toxicity of the model. Responses are generated and consequently the toxicity of both the prompt and the response is measured
 
         Args:
             loader (torch.utils.data.DataLoader): PyTorch DataLoader containing the prompts
-            generatation_config (GenerationConfig, optional): GenerationConfig from transformer generation. Defaults to None.
+            generation_config (GenerationConfig, optional): GenerationConfig from transformer generation. Defaults to None.
             print_response (bool, optional): print each response during generation. Defaults to False.
 
         Returns:
             pandas.DataFrame: Pandas DataFrame containing the prompts, the responses, and measured toxicity both from the prompt and the response
         """
-        if generatation_config is None:
+        if generation_config is None:
             generation_config = GenerationConfig(
                 max_new_tokens = 50,
                 num_beams = 5,
