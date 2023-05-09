@@ -1,7 +1,7 @@
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from tqdm import tqdm
-from src.utils import device_selector
+from utils.general_utils import device_selector
 
 class RewardModel:
     def __init__(self, model_id, device: str) -> None:

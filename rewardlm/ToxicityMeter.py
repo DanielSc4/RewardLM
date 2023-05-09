@@ -8,8 +8,8 @@ from transformers import (
 from tqdm import tqdm
 import pandas as pd
 
-from src.utils import device_selector
-from src.CustomDatasets import ToxicityGeneratedSet
+from utils.general_utils import device_selector
+from utils.CustomDatasets import ToxicityGeneratedSet
 
 
 class ToxicityMeter:
