@@ -1,5 +1,5 @@
 # 🥞 **RewardLM**
-Reward a language model with pancakes
+Reward a Language Model with pancakes 🥞
 
 
 ## **ToxicityMeter**
