@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "rewardlm"
+version = "0.1.0"
+description = ""
+authors = ["daniel <scalena99@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+datasets = "^2.12.0"
+pandas = "^2.0.1"
+torch = "^2.0.1"
+tqdm = "^4.65.0"
+transformers = "^4.28.1"
+accelerate = "^0.19.0"
+bitsandbytes = "^0.38.1"
+peft = "^0.3.0"
+loralib = "^0.1.1"
+numpy = "^1.24.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
