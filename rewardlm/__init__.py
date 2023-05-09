@@ -1,1 +1,1 @@
-"""Reward a Language Model with a cookie 🍪"""
+"""Reward a Language Model with pancakes 🥞"""

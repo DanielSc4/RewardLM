@@ -1,5 +1,5 @@
-# 🍪 **RewardLM**
-Repo to keep code about the training of a RL algo on Transformer based LM 
+# 🥞 **RewardLM**
+Reward a language model with pancakes
 
 
 ## **ToxicityMeter**
