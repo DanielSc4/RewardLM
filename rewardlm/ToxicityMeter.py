@@ -136,10 +136,11 @@ class ToxicityMeter:
         """
         if generation_config is None:
             generation_config = GenerationConfig(
-                max_new_tokens = 50,
+                max_new_tokens = 25,
                 num_beams = 5,
                 early_stopping = True,
                 pad_token_id = 0,       # crashes while using batchsize > 1 only on mps device if not set
+                top_p = .9,
             )
 
         generation = {

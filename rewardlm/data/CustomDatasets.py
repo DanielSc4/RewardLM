@@ -34,7 +34,7 @@ class PromptsDataset(Dataset):
     
 
 
-# dataset containign the pair (prompt, response) to measure the toxicity
+# dataset containing the pair (prompt, response) to measure the toxicity
 class ToxicityGeneratedSet(Dataset):
     def __init__(self, df, tokenizer, max_len = 512):
         
