@@ -10,6 +10,7 @@ import pandas as pd
 
 from .utils.general_utils import device_selector
 from .data.CustomDatasets import ToxicityGeneratedSet
+from .reward.RewardModel import RewardModel
 
 
 class ToxicityMeter:
@@ -54,8 +55,9 @@ class ToxicityMeter:
                     torch_dtype = torch.float,  # fp32, standard mode, more size/resource consuming
                 ).to(self.device)
 
-        self.toxicity_tokenizer = AutoTokenizer.from_pretrained(toxicity_model_id)
-        self.toxicity_model = AutoModelForSequenceClassification.from_pretrained(toxicity_model_id)
+        self.reward_manager = RewardModel(toxicity_model_id, device = device)
+        # self.toxicity_tokenizer = AutoTokenizer.from_pretrained(toxicity_model_id)
+        # self.toxicity_model = AutoModelForSequenceClassification.from_pretrained(toxicity_model_id)
 
     def __get_prompts_responses(
             self, 
@@ -161,17 +163,17 @@ class ToxicityMeter:
             generation['prompts'].extend(prmpt)
             generation['responses'].extend(rspns)
         
-        # generating toxicity scores
+        # generating toxicity scores from reward model
         gen_tox_df = pd.DataFrame.from_dict(generation)
         model_tox_set = ToxicityGeneratedSet(
             df = gen_tox_df, 
             tokenizer = self.toxicity_tokenizer, 
-            max_len = 128
+            max_len = 128,
         )
         model_tox_loader = torch.utils.data.DataLoader(
             model_tox_set, 
             batch_size = 32, 
-            shuffle = False
+            shuffle = False,
         )
 
         result_tox = self.__get_toxic_score(model_tox_loader)
