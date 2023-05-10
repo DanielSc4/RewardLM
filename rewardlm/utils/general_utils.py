@@ -4,7 +4,7 @@ import pandas as pd
 import transformers
 from torch.utils.data import DataLoader
 
-from .CustomDatasets import PromptsDataset
+from ..data.CustomDatasets import PromptsDataset
 
 def device_selector():
     """_summary_
