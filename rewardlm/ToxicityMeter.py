@@ -9,8 +9,10 @@ from tqdm import tqdm
 import pandas as pd
 
 from .utils.general_utils import device_selector
+from .data.data_utils import gen_data
 from .data.CustomDatasets import ToxicityGeneratedSet
 from .reward.RewardModel import RewardModel
+from .generation.GenerativeModel import GenerativeModel
 
 
 class ToxicityMeter:
@@ -27,37 +29,15 @@ class ToxicityMeter:
             load_dtype (str): dtype of the model, can be 8-bit, bf16 otherwise fp32 (standard mode)
             device (str, optional): device where tensors will be placed. Can be 'cuda', 'mps' or 'cpu'. Important: dtype = 8bit can be used only on 'cuda'. Defaults to None.
         """
-        
+
         if device is None:
             self.device = device_selector()
         else:
-            assert load_dtype != '8-bit', '"8-bit" mode cannot be used with devices other than "cuda"'
             self.device = device
         
-        self.tokenizer = AutoTokenizer.from_pretrained(model_id)
-
-        if load_dtype == '8-bit':
-            self.model = AutoModelForCausalLM.from_pretrained(
-                model_id, 
-                # torch_dtype = dtype,
-                device_map = "auto", 
-                load_in_8bit = True,  # loading models in 8-bit (only inference)
-            )
-        else:
-            if load_dtype == 'bf16':
-                self.model = AutoModelForCausalLM.from_pretrained(
-                    model_id, 
-                    torch_dtype = torch.bfloat16,
-                ).to(self.device)
-            else:
-                self.model = AutoModelForCausalLM.from_pretrained(
-                    model_id, 
-                    torch_dtype = torch.float,  # fp32, standard mode, more size/resource consuming
-                ).to(self.device)
-
         self.reward_manager = RewardModel(toxicity_model_id, device = device)
-        # self.toxicity_tokenizer = AutoTokenizer.from_pretrained(toxicity_model_id)
-        # self.toxicity_model = AutoModelForSequenceClassification.from_pretrained(toxicity_model_id)
+        self.generator_manager = GenerativeModel(model_id, device = device, load_dtype = load_dtype)
+
 
     def __get_prompts_responses(
             self, 
@@ -76,8 +56,8 @@ class ToxicityMeter:
             'purple': '\033[95m',
         }
 
-        prompts = self.tokenizer.batch_decode(prompts, skip_special_tokens = True)
-        responses = self.tokenizer.batch_decode(responses, skip_special_tokens = True)
+        prompts = self.generator_manager.tokenizer.batch_decode(prompts, skip_special_tokens = True)
+        responses = self.generator_manager.tokenizer.batch_decode(responses, skip_special_tokens = True)
 
         clean_responses = []
         for prompt, response in zip(prompts, responses):
@@ -89,45 +69,18 @@ class ToxicityMeter:
             
         return (prompts, clean_responses)
     
-    def __get_toxic_score(self, model_tox_loader: torch.utils.data.DataLoader):
-        result_tox = {
-            # 'index': [],
-            # 'prompts': [],
-            # 'generation': [],
-            'prmpt_toxicity_roberta': [],
-            'gen_toxicity_roberta': [],
-        }
-
-        for _, prompt, response in tqdm(model_tox_loader):
-            for ele1, ele2 in zip(prompt, response):
-                prompt[ele1] = prompt[ele1].to(self.device)
-                response[ele2] = response[ele2].to(self.device)
-
-            self.toxicity_model.to(self.device)
-            with torch.no_grad():
-                output_prompt = self.toxicity_model(**prompt)
-                output_response = self.toxicity_model(**response)
-
-            # apply softmax and selecting only toxicity score [1]
-            output_soft_prompt = torch.nn.functional.softmax(output_prompt[0].detach(), dim = 1).cpu().numpy()[:, 1]
-            output_soft_response = torch.nn.functional.softmax(output_response[0].detach(), dim = 1).cpu().numpy()[:, 1]
-
-            # result_tox['index'].extend(idx.tolist())
-            result_tox['prmpt_toxicity_roberta'].extend(output_soft_prompt.tolist())
-            result_tox['gen_toxicity_roberta'].extend(output_soft_response.tolist())
-        
-        return result_tox
 
     def measure_toxicity(
             self,
-            loader: torch.utils.data.DataLoader,
+            custom_prompt: str,
             generation_config: GenerationConfig = None, 
             print_response: bool = False,
+            batch_size: int = 8,
         ):
         """Main function for measuring the toxicity of the model. Responses are generated and consequently the toxicity of both the prompt and the response is measured
 
         Args:
-            loader (torch.utils.data.DataLoader): PyTorch DataLoader containing the prompts
+            custom_prompt (str): format string where '{prompt}' is the original prompt. Defaults to '{prompt}'.
             generation_config (GenerationConfig, optional): GenerationConfig from transformer generation. Defaults to None.
             print_response (bool, optional): print each response during generation. Defaults to False.
 
@@ -148,11 +101,19 @@ class ToxicityMeter:
             'responses': [],
         }
 
+        # preparing loader
+        loader = gen_data(
+            tokenizer = self.generator_manager.tokenizer, 
+            max_len = 128 + len(custom_prompt),
+            custom_prompt = custom_prompt,
+            batch_size = batch_size,
+        )
+
         # generating text
         for inputs in tqdm(loader):
             for ele in inputs:
                 inputs[ele] = inputs[ele].to(self.device)
-            output = self.model.generate(
+            output = self.generator_manager.model.generate(
                 **inputs,
                 generation_config = generation_config,
             )
@@ -168,7 +129,7 @@ class ToxicityMeter:
         gen_tox_df = pd.DataFrame.from_dict(generation)
         model_tox_set = ToxicityGeneratedSet(
             df = gen_tox_df, 
-            tokenizer = self.toxicity_tokenizer, 
+            tokenizer = self.reward_manager.tokenizer, 
             max_len = 128,
         )
         model_tox_loader = torch.utils.data.DataLoader(
@@ -177,7 +138,7 @@ class ToxicityMeter:
             shuffle = False,
         )
 
-        result_tox = self.__get_toxic_score(model_tox_loader)
+        result_tox = self.reward_manager.get_batch_score_pair(model_tox_loader)
         # adding toxicity scores
         toxicity_df = gen_tox_df.join(pd.DataFrame.from_dict(result_tox))
 

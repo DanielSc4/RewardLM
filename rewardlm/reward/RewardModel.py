@@ -2,7 +2,7 @@ import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from tqdm import tqdm
 
-from ..utils import general_utils
+from ..utils.general_utils import device_selector
 
 class RewardModel:
     def __init__(self, model_id: str, device: str = None) -> None:
@@ -14,13 +14,15 @@ class RewardModel:
         """
 
         if device is None:
-            self.device = general_utils.device_selector()
+            self.device = device_selector()
+        else:
+            self.device = device
         
         self.tokenizer = AutoTokenizer.from_pretrained(model_id)
         self.model = AutoModelForSequenceClassification.from_pretrained(model_id)
 
     def tokenize_text(self, text: str, **kwargs):
-        """tokenize a single sentence
+        """tokenize a single sentence w/ the reward tokenizer
 
         Args:
             text (str): text
@@ -47,9 +49,11 @@ class RewardModel:
         out = torch.nn.functional.softmax(out['logits'].detach(), dim = 1).cpu().numpy()[:, 1]
         return out
     
+    # def __get_model_out_batch(self, prompt):
+    
 
-    def get_score(self, prompt: dict, response: dict):
-        """Get toxicity score for a single prompt, response
+    def get_score_pair(self, prompt: dict, response: dict):
+        """Get toxicity score for a single pair (prompt, response)
 
         Args:
             prompt (dict): tokenized prompt
@@ -70,7 +74,7 @@ class RewardModel:
         return (output_prompt, output_response)
 
     
-    def get_batch_score(self, model_loader: torch.utils.data.DataLoader):
+    def get_batch_score_pair(self, model_loader: torch.utils.data.DataLoader):
         """Get the toxicity score of the prompt and the response using batched input
 
         Args:
