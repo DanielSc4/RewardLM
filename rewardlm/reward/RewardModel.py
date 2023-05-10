@@ -30,8 +30,8 @@ class RewardModel:
                 output_response = self.model(**response)
 
             # apply softmax and selecting only scores [1]
-            out_soft_prompt = torch.nn.functional.softmax(output_prompt[0].detach(), dim = 1).cpu().numpy()[:, 1]
-            out_soft_response = torch.nn.functional.softmax(output_response[0].detach(), dim = 1).cpu().numpy()[:, 1]
+            out_soft_prompt = torch.nn.functional.softmax(output_prompt['logits'].detach(), dim = 1).cpu().numpy()[:, 1]
+            out_soft_response = torch.nn.functional.softmax(output_response['logits'].detach(), dim = 1).cpu().numpy()[:, 1]
 
             result_tox['prompt_score'].extend(out_soft_prompt.tolist())
             result_tox['response_score'].extend(out_soft_response.tolist())
