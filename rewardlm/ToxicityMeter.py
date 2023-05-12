@@ -4,7 +4,7 @@ from tqdm import tqdm
 import pandas as pd
 
 from .utils.general_utils import device_selector
-from .data.data_utils import gen_benchmark_data
+from .data.data_utils import gen_loader
 from .data.CustomDatasets import ToxicityGeneratedSet
 from .core.RewardModel import RewardModel
 from .core.GenerativeModel import GenerativeModel
@@ -67,6 +67,7 @@ class ToxicityMeter:
 
     def measure_toxicity(
             self,
+            text_prompt: list[str],
             custom_prompt: str,
             generation_config: GenerationConfig = None, 
             print_response: bool = False,
@@ -97,8 +98,10 @@ class ToxicityMeter:
             'responses': [],
         }
 
+
         # preparing loader
-        loader = gen_benchmark_data(
+        loader = gen_loader(
+            text = text_prompt,
             tokenizer = self.generator_manager.tokenizer, 
             max_len = 128 + len(custom_prompt),
             custom_prompt = custom_prompt,

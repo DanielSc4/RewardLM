@@ -5,7 +5,7 @@ from ..utils.general_utils import device_selector
 
 class GenerativeModel:
     def __init__(self, model_id: str, device: str = None, load_dtype: str = 'fp32') -> None:
-        """wrapper class for all the generative models from 🤗 HuggingFace
+        """Wrapper class for all the generative models from 🤗 HuggingFace
 
         Args:
             model_id (str): model id or path from 🤗 Hugging Face
@@ -35,3 +35,5 @@ class GenerativeModel:
 
         # tokenizer
         self.tokenizer = AutoTokenizer.from_pretrained(model_id)
+    
+    

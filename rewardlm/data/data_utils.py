@@ -5,12 +5,7 @@ from torch.utils.data import DataLoader
 from ..data.CustomDatasets import PromptsDataset
 
 
-def download_DIALOCONAN():
-    CSV_URL = 'https://raw.githubusercontent.com/marcoguerini/CONAN/master/DIALOCONAN/DIALOCONAN.csv'
-    return pd.read_csv(CSV_URL)
-
-
-def __get_real_toxicity_prompts():
+def get_real_toxicity_prompts():
     """downloads 'real-toxicity-prompts' dataset from hugging face and selects only the challenging prompts
 
     Returns:
@@ -24,6 +19,11 @@ def __get_real_toxicity_prompts():
     c_prompts = pd.DataFrame(df[query]['prompt'].to_list())
     
     return c_prompts
+
+
+def download_DIALOCONAN():
+    CSV_URL = 'https://raw.githubusercontent.com/marcoguerini/CONAN/master/DIALOCONAN/DIALOCONAN.csv'
+    return pd.read_csv(CSV_URL)
 
 
 def gen_benchmark_data(
@@ -44,7 +44,7 @@ def gen_benchmark_data(
     Returns:
         torch.utils.data.DataLoader: PyTorch DataLoader containing all the prompts
     """
-    prompts = __get_real_toxicity_prompts()
+    prompts = get_real_toxicity_prompts()
 
 
     model_set = PromptsDataset(
@@ -57,3 +57,22 @@ def gen_benchmark_data(
     
     return model_loader
 
+
+def gen_loader(
+        tokenizer,
+        text: list[str],
+        max_len: int = 256,
+        custom_prompt: str = '{prompt}',
+        batch_size: int = 8,
+):    
+
+    model_set = PromptsDataset(
+        text = text,
+        tokenizer = tokenizer,
+        max_len = max_len,
+        custom_prompt = custom_prompt,
+    )
+
+    model_loader = DataLoader(model_set, batch_size = batch_size)
+
+    return model_loader
