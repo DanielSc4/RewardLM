@@ -26,16 +26,17 @@ def __get_real_toxicity_prompts():
     return c_prompts
 
 
-def gen_data(
+def gen_benchmark_data(
         tokenizer, 
         max_len: int = 128,
         custom_prompt: str = '{prompt}',
         batch_size: int = 8,
     ):
-    """generate PyTorch DataLoader based on the given parameter. Prompts can also be customized using custom_prompt parameter
+    """Generate PyTorch DataLoader based on the given parameter using RealToxicityPrompt as benchmark dataset. 
+    Prompts can also be customized using custom_prompt parameter
 
     Args:
-        tokenizer (transformers.AutoTokenizer): tokenizer for the generative model
+        tokenizer (transformers.AutoTokenizer): tokenizer of the generative model
         max_len (int, optional): max length of a single sentence when tokenizing. Defaults to 128.
         custom_prompt (str, optional): format string where '{prompt}' is the original prompt. Defaults to '{prompt}'.
         batch_size (int, optional): batch size dimension. Defaults to 8.
@@ -45,10 +46,10 @@ def gen_data(
     """
     prompts = __get_real_toxicity_prompts()
 
+
     model_set = PromptsDataset(
-        df = prompts,
+        text = prompts['text'].to_list(),
         tokenizer = tokenizer,
-        text_col = 'text', 
         max_len = max_len,
         custom_prompt = custom_prompt,
     )

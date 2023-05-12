@@ -74,7 +74,7 @@ class RewardModel:
         return (output_prompt, output_response)
 
     
-    def get_batch_score_pair(self, model_loader: torch.utils.data.DataLoader):
+    def get_batch_score_pair(self, model_loader):
         """Get the toxicity score of the prompt and the response using batched input
 
         Args:

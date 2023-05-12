@@ -1,18 +1,13 @@
 import torch
-from transformers import (
-    AutoTokenizer, 
-    AutoModelForCausalLM, 
-    AutoModelForSequenceClassification, 
-    GenerationConfig
-)
+from transformers import GenerationConfig
 from tqdm import tqdm
 import pandas as pd
 
 from .utils.general_utils import device_selector
-from .data.data_utils import gen_data
+from .data.data_utils import gen_benchmark_data
 from .data.CustomDatasets import ToxicityGeneratedSet
-from .reward.RewardModel import RewardModel
-from .generation.GenerativeModel import GenerativeModel
+from .core.RewardModel import RewardModel
+from .core.GenerativeModel import GenerativeModel
 
 
 class ToxicityMeter:
@@ -77,7 +72,8 @@ class ToxicityMeter:
             print_response: bool = False,
             batch_size: int = 8,
         ):
-        """Main function for measuring the toxicity of the model. Responses are generated and consequently the toxicity of both the prompt and the response is measured
+        """Main function for measuring the toxicity of the model using RealToxicityPrompt as benchmark. 
+        Responses are generated and consequently the toxicity of both the prompt and the response is measured
 
         Args:
             custom_prompt (str): format string where '{prompt}' is the original prompt. Defaults to '{prompt}'.
@@ -102,7 +98,7 @@ class ToxicityMeter:
         }
 
         # preparing loader
-        loader = gen_data(
+        loader = gen_benchmark_data(
             tokenizer = self.generator_manager.tokenizer, 
             max_len = 128 + len(custom_prompt),
             custom_prompt = custom_prompt,
