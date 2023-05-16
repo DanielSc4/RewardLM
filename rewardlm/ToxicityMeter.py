@@ -15,7 +15,8 @@ class ToxicityMeter:
         model_id: str, 
         load_dtype: str, # can be ['8-bit', 'bf16',]
         toxicity_model_id: str,
-        device: str = None
+        device: str = None,
+        generation_config: GenerationConfig = None,
     ) -> None:
         """Measures the toxicity of a given generative model based on the output of the toxicity_model
 
@@ -31,7 +32,7 @@ class ToxicityMeter:
             self.device = device
         
         self.reward_manager = RewardModel(toxicity_model_id, device = device)
-        self.generator_manager = GenerativeModel(model_id, device = device, load_dtype = load_dtype)
+        self.generator_manager = GenerativeModel(model_id, device = device, load_dtype = load_dtype, generation_config = generation_config)
 
 
     def __get_prompts_responses(
