@@ -2,11 +2,12 @@
 # Adaptation of https://github.com/lvwerra/trl/blob/main/examples/sentiment/scripts/gpt-neox-20b_peft/gpt-neo-20b_sentiment_peft.py
 
 import torch
+from torch.utils.data import DataLoader
 from trl import PPOConfig, PPOTrainer, set_seed
 
 from ..GenerativeModel import GenerativeModel
 from ..RewardModel import RewardModel
-from ...data.CustomDatasets import PromptsDataset
+from ...data.CustomDatasets import PromptsDataset, ToxicityGeneratedSet
 
 from tqdm import tqdm
 
@@ -23,6 +24,7 @@ class RLModel:
             device: str = 'cpu',
             dtype: str = 'fp32',
             seed: int = 42,
+            log_method: str = None,
         ) -> None:
         """Manager of the trl
 
@@ -36,7 +38,7 @@ class RLModel:
             gradient_acc_steps (int, optional): the number of gradient accumulation steps. Defaults to 1.
             device (str, optional): device on which the model should be trained. Defaults to 'cpu'.
             seed (int, optionl): The seed. Defaults to 42.
-
+            log_method (str, optional): Log stats with ['wandb', 'tensorboard']. Defaults to None.
             dataset (rewardlm.data.CustomDatasets.PromptsDataset): Dataset to be used. Defaults to None.
         """
         
@@ -51,10 +53,11 @@ class RLModel:
         self.config = PPOConfig(
             model_name = model_id,
             learning_rate = lr,
-            log_with='wandb',
+            log_with = log_method,
             mini_batch_size = mini_bs,
             batch_size = bs,
-            gradient_accumulation_steps = gradient_acc_steps
+            gradient_accumulation_steps = gradient_acc_steps,
+            accelerator_kwargs = {'device_placement': False},       # accelerate kwarg TODO: check how to pass device
         )
 
         
@@ -86,8 +89,10 @@ class RLModel:
         return dict((key, [d[key] for d in data]) for key in data[0])
     
     
-    def train_PPO(self, dataset: torch.utils.data.Dataset):
-        
+    def train_PPO(
+            self, 
+            dataset: torch.utils.data.Dataset, 
+        ):
         self.generator_manager.wrap_valueHead()
 
         optimizer = torch.optim.Adam(
@@ -99,50 +104,70 @@ class RLModel:
             self.generator_manager.model, 
             ref_model = None, 
             tokenizer = self.generator_manager.tokenizer, 
-            dataset = dataset, 
-            data_collator = self.collator, 
-            optimizer = optimizer
+            # dataset = dataset, 
+            # data_collator = self.collator, 
+            optimizer = optimizer,
         )
 
-        device = ppo_trainer.accelerator.device
-        if ppo_trainer.accelerator.num_processes == 1:
-            device = 0 if torch.cuda.is_available() else "cpu"  # to avoid a `pipeline` bug
+        # creating dataloader manually
+        model_loader = DataLoader(
+            dataset = dataset, 
+            batch_size = self.config.batch_size,
+        )
 
-        for epoch, batch in tqdm(enumerate(ppo_trainer.dataloader)):
+        print(ppo_trainer.accelerator.device) 
+        # = 'cuda' if torch.cuda.is_available() else "cpu"  # to avoid a `pipeline` bug
 
+        for epoch, batch in tqdm(enumerate(model_loader)):
+            print(f'Epoch {epoch + 1}:')
             self.generator_manager.model.gradient_checkpointing_disable()
             self.generator_manager.model.config.use_cache = True
 
             # get generation
             responses = []
             for prompt in batch['input_ids']:
-                response = ppo_trainer.generate(prompt, self.generator_manager.generation_config)
+                response = ppo_trainer.generate(
+                    prompt, 
+                    generation_config = self.generator_manager.generation_config,
+                )
                 responses.append(response.squeeze()[len(prompt):])
             batch['response'] = [
                 self.generator_manager.tokenizer.decode(r.squeeze()) for r in responses
             ]
+
             batch['prompt'] = [
-                self.generator_manager.tokenizer.decode(p.squeeze()) for p in batch["input_ids"]
+                self.generator_manager.tokenizer.decode(p.squeeze(), skip_special_tokens = True) for p in batch["input_ids"]
             ]
 
             # compute reward
             # texts = [
             #     q + r for q, r in zip(batch['prompt'], batch['response'])
             # ]
-            
-            _, score_resposne = self.reward_manager.get_score_pair(
-                prompt = batch['prompt'],
-                response = batch['response'],
+
+            model_tox_set = ToxicityGeneratedSet(
+                prompts = batch['prompt'],
+                responses = batch['response'],
+                tokenizer = self.reward_manager.tokenizer,
+                max_len = len(batch["input_ids"][0]),       # keep the same length
+            )
+
+            result_tox = self.reward_manager.get_batch_score_pair(
+                DataLoader(model_tox_set, batch_size = 32, shuffle = False)
             ) # TODO: or should be get_batch_score_pair (?)
             # what reward contains? Check on original script
             # Hp: score_resposne should be a list of torch.Tensor
 
             self.generator_manager.model.gradient_checkpointing_enable()
             self.generator_manager.model.pretrained_model.config.use_cache = False
-
-            stats = ppo_trainer.step(batch['input_ids'], responses, score_resposne)
-            ppo_trainer.log_stats(stats, batch, rewards = score_resposne)
-
+            
+            stats = ppo_trainer.step(
+                queries = batch['input_ids'].to_list(), 
+                responses = responses, 
+                scores = result_tox['response_score'],
+            )
+            ppo_trainer.log_stats(stats, batch, rewards = result_tox['response_score'])
+        
+        return ppo_trainer
 
     
 
