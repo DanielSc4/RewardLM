@@ -7,3 +7,4 @@ accelerate
 bitsandbytes
 peft
 loralib
+wandb

@@ -128,7 +128,8 @@ class ToxicityMeter:
         # generating toxicity scores from reward model
         gen_tox_df = pd.DataFrame.from_dict(generation)
         model_tox_set = ToxicityGeneratedSet(
-            df = gen_tox_df, 
+            prompts = gen_tox_df['prompts'].to_list(),
+            responses = gen_tox_df['prompts'].to_list(),
             tokenizer = self.reward_manager.tokenizer, 
             max_len = 128,
         )

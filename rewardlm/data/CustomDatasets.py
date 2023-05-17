@@ -48,17 +48,17 @@ class ToxicityGeneratedSet(Dataset):
     the tokenized prompt and response
 
     """
-    def __init__(self, df, tokenizer, max_len = 512):
+    def __init__(self, prompts, responses, tokenizer, max_len = 512):
         
         self.prompts = tokenizer(
-            df['prompts'].to_list(), 
+            prompts, 
             padding = 'max_length', 
             max_length = max_len, 
             truncation = True,
             return_tensors = "pt",
         )
         self.responses = tokenizer(
-            df['responses'].to_list(), 
+            responses, 
             padding = 'max_length', 
             max_length = max_len, 
             truncation = True,
