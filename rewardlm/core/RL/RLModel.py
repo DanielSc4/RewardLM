@@ -41,7 +41,7 @@ class RLModel:
             log_method (str, optional): Log stats with ['wandb', 'tensorboard']. Defaults to None.
             dataset (rewardlm.data.CustomDatasets.PromptsDataset): Dataset to be used. Defaults to None.
         """
-        
+        assert bs >= mini_bs, 'bs should be >= than mini_bs'
         set_seed(seed)
         self.device = device
         self.generator_manager = GenerativeModel(model_id, device = self.device, load_dtype = dtype)
@@ -57,7 +57,6 @@ class RLModel:
             mini_batch_size = mini_bs,
             batch_size = bs,
             gradient_accumulation_steps = gradient_acc_steps,
-            accelerator_kwargs = {'device_placement': False},       # accelerate kwarg TODO: check how to pass device
         )
 
         
@@ -159,11 +158,11 @@ class RLModel:
 
             self.generator_manager.model.gradient_checkpointing_enable()
             self.generator_manager.model.pretrained_model.config.use_cache = False
-            
+
             stats = ppo_trainer.step(
-                queries = batch['input_ids'].to_list(), 
+                queries = list(batch['input_ids']),     # get list of tensor, shape [sample, max_len]
                 responses = responses, 
-                scores = result_tox['response_score'],
+                scores = [torch.tensor(s) for s in result_tox['response_score']],
             )
             ppo_trainer.log_stats(stats, batch, rewards = result_tox['response_score'])
         
