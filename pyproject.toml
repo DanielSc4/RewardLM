@@ -18,6 +18,7 @@ peft = "^0.3.0"
 loralib = "^0.1.1"
 numpy = "^1.24.3"
 wandb = "^0.15.2"
+trl = "^0.4.1"
 
 
 [build-system]

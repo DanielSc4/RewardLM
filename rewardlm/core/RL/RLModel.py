@@ -125,6 +125,7 @@ class RLModel:
             # get generation
             responses = []
             for prompt in batch['input_ids']:
+                prompt = prompt.to(self.device)
                 response = ppo_trainer.generate(
                     prompt, 
                     generation_config = self.generator_manager.generation_config,

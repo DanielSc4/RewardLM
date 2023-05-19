@@ -8,3 +8,4 @@ bitsandbytes
 peft
 loralib
 wandb
+trl

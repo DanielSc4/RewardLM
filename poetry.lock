@@ -1686,6 +1686,30 @@ video = ["av (==9.2.0)", "decord (==0.6.0)"]
 vision = ["Pillow"]
 
 [[package]]
+name = "trl"
+version = "0.4.1"
+description = "A Pytorch implementation of Proximal Policy Optimization for transfomer language models."
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "trl-0.4.1-py3-none-any.whl", hash = "sha256:26b0acc920784fc490f6c3b010805064d27390b70910f4f39ff8bdc6ca3b9d45"},
+    {file = "trl-0.4.1.tar.gz", hash = "sha256:dfee9ee6c21f533e6705fa39472cfe81ec3f2b04efeee99022c6c036453df349"},
+]
+
+[package.dependencies]
+accelerate = "*"
+datasets = "*"
+numpy = ">=1.18.2"
+torch = ">=1.4.0"
+transformers = ">=4.18.0"
+
+[package.extras]
+dev = ["black", "flake8 (>=3.8.3)", "isort", "parameterized", "peft (>=0.2.0)", "pytest", "pytest-xdist"]
+peft = ["peft (>=0.2.0)"]
+test = ["accelerate", "parameterized", "peft", "pytest", "pytest-xdist"]
+
+[[package]]
 name = "typing-extensions"
 version = "4.5.0"
 description = "Backported and Experimental Type Hints for Python 3.7+"
@@ -1968,4 +1992,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "be3314981b63b1c2ba7746c980a84a3e10e232ad822ade5ff0e1402fad11aac0"
+content-hash = "d88ffc797863126ba271273db57e2386c4357408c9689480545b71101395520e"
