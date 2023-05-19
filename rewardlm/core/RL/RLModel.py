@@ -95,7 +95,11 @@ class RLModel:
     def train_PPO(
             self, 
             dataset: torch.utils.data.Dataset, 
+            model_save_path: str = './checkpoints/',
         ):
+
+        tot_stats = []
+
         self.generator_manager.wrap_valueHead()
 
         optimizer = torch.optim.Adam(
@@ -116,12 +120,13 @@ class RLModel:
         model_loader = DataLoader(
             dataset = dataset, 
             batch_size = self.config.batch_size,
+            drop_last = True,       # There is a ValueError if the last batch does not match the batchsize dimension! (trl/trainer/ppo_trainer.py:408)
         )
 
         model_loader = self.accelerator.prepare(model_loader)
 
-        for epoch, batch in tqdm(enumerate(model_loader)):
-            print(f'Epoch {epoch + 1}:')
+        for n_batch, batch in tqdm(enumerate(model_loader)):
+            print(f'batch n: {n_batch + 1}:')
             self.generator_manager.model.gradient_checkpointing_disable()
             self.generator_manager.model.config.use_cache = True
 
@@ -162,16 +167,20 @@ class RLModel:
             self.generator_manager.model.gradient_checkpointing_enable()
             self.generator_manager.model.pretrained_model.config.use_cache = False
 
-
-
             stats = ppo_trainer.step(
                 queries = list(batch['input_ids']),     # get list of tensor, shape [sample, max_len]
                 responses = responses, 
                 scores = [torch.tensor(s) for s in result_tox['response_score']],
             )
             ppo_trainer.log_stats(stats, batch, rewards = result_tox['response_score'])
-        
-        return ppo_trainer
+            tot_stats.append(stats)
+
+            # Save model every 100 batch
+            if n_batch % 100 == 0:
+                if ppo_trainer.accelerator.is_main_process:
+                    ppo_trainer.save_pretrained(model_save_path)
+            
+        return ppo_trainer, tot_stats
 
     
 
