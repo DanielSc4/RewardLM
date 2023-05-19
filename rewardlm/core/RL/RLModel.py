@@ -4,6 +4,7 @@
 import torch
 from torch.utils.data import DataLoader
 from trl import PPOConfig, PPOTrainer, set_seed
+from accelerate import Accelerator
 
 from ..GenerativeModel import GenerativeModel
 from ..RewardModel import RewardModel
@@ -21,10 +22,10 @@ class RLModel:
             mini_bs: int = 16, 
             bs: int = 256, 
             gradient_acc_steps: int = 1, 
-            device: str = 'cpu',
             dtype: str = 'fp32',
             seed: int = 42,
             log_method: str = None,
+            accelerator_kwargs: dict = {},
         ) -> None:
         """Manager of the trl
 
@@ -42,10 +43,12 @@ class RLModel:
             dataset (rewardlm.data.CustomDatasets.PromptsDataset): Dataset to be used. Defaults to None.
         """
         assert bs >= mini_bs, 'bs should be >= than mini_bs'
+
+        self.accelerator = Accelerator(**accelerator_kwargs)
+
         set_seed(seed)
-        self.device = device
-        self.generator_manager = GenerativeModel(model_id, device = self.device, load_dtype = dtype)
-        self.reward_manager = RewardModel(reward_model_id, device = self.device)
+        self.generator_manager = GenerativeModel(model_id, device = self.accelerator.device, load_dtype = dtype)
+        self.reward_manager = RewardModel(reward_model_id, device = self.accelerator.device)
 
         if optimized:
             self.generator_manager.apply_LoRA()
@@ -57,6 +60,7 @@ class RLModel:
             mini_batch_size = mini_bs,
             batch_size = bs,
             gradient_accumulation_steps = gradient_acc_steps,
+            accelerator_kwargs = accelerator_kwargs,
         )
 
         
@@ -114,8 +118,7 @@ class RLModel:
             batch_size = self.config.batch_size,
         )
 
-        print(ppo_trainer.accelerator.device) 
-        # = 'cuda' if torch.cuda.is_available() else "cpu"  # to avoid a `pipeline` bug
+        model_loader = self.accelerator.prepare(model_loader)
 
         for epoch, batch in tqdm(enumerate(model_loader)):
             print(f'Epoch {epoch + 1}:')
@@ -125,7 +128,6 @@ class RLModel:
             # get generation
             responses = []
             for prompt in batch['input_ids']:
-                prompt = prompt.to(self.device)
                 response = ppo_trainer.generate(
                     prompt, 
                     generation_config = self.generator_manager.generation_config,
@@ -159,6 +161,8 @@ class RLModel:
 
             self.generator_manager.model.gradient_checkpointing_enable()
             self.generator_manager.model.pretrained_model.config.use_cache = False
+
+
 
             stats = ppo_trainer.step(
                 queries = list(batch['input_ids']),     # get list of tensor, shape [sample, max_len]
