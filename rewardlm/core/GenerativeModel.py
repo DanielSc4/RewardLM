@@ -1,10 +1,17 @@
 import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
+import torch.nn as nn
+from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig, Trainer, TrainingArguments
 
 from peft import LoraConfig, get_peft_model, prepare_model_for_int8_training
 from trl import AutoModelForCausalLMWithValueHead
 
 from ..utils.general_utils import device_selector
+
+
+class CastOutputToFloat(nn.Sequential):
+    def forward(self, x): 
+        return super().forward(x).to(torch.float32)
+
 
 class GenerativeModel:
     def __init__(self, model_id: str, device: str = None, load_dtype: str = 'fp32', generation_config: GenerationConfig = None) -> None:
@@ -31,11 +38,15 @@ class GenerativeModel:
         else:
             self.generation_config = generation_config
 
+        self.load_dtype = load_dtype
+
         if device is None:
             self.device = device_selector()
         else:
             assert load_dtype != '8-bit', '"8-bit" mode cannot be used with devices other than "cuda"'
             self.device = device
+
+        
         
         if load_dtype == '8-bit':
             self.model = AutoModelForCausalLM.from_pretrained(
@@ -83,9 +94,55 @@ class GenerativeModel:
         self.model = prepare_model_for_int8_training(self.model)
         self.model = get_peft_model(self.model, lora_config)
     
+
     def wrap_valueHead(self):
         self.model = AutoModelForCausalLMWithValueHead.from_pretrained(self.model)
 
         self.model.gradient_checkpointing_disable = self.model.pretrained_model.gradient_checkpointing_disable
         self.model.gradient_checkpointing_enable = self.model.pretrained_model.gradient_checkpointing_enable
 
+
+    def fine_tune(
+            self,
+            torch_dataset: torch.utils.data.Dataset, 
+            optimized: bool = False,
+        ):
+        if optimized:
+            assert self.load_dtype == '8-bit', '8 bit mode required for PEFT (optimized)'
+        
+
+        # apply some post-processing on the 8-bit model to enable training
+        # freeze all layers and cast the layer-norm (and the output) to float32 for stability
+        for param in self.model.parameters():
+            param.requires_grad = False     # freeze
+            if param.ndim == 1:
+                param.data = param.data.to(torch.float32)
+
+        self.model.gradient_checkpointing_enable()
+        self.model.enable_input_require_grads()     # Enables the gradients for the input embeddings. This is useful for fine-tuning adapter weights while keeping the model weights fixed.
+
+
+        self.model.lm_head = CastOutputToFloat(self.model.lm_head)
+        self.apply_LoRA()
+        self.print_trainable_parameters()
+
+        ## Training
+
+        trainer = Trainer(
+            model = self.model,
+            train_dataset = torch_dataset,
+            args = TrainingArguments(
+                per_device_train_batch_size = 4,
+                gradient_accumulation_steps = 4,
+                warmup_steps = 100,
+                max_steps = 200,
+                learning_rate = 2e-4,
+                fp16 = True,
+                logging_steps = 1,
+                output_dir = './checkpoints/fine_tune/',
+            )
+        )
+        
+        trainer.train()
+        
+        
