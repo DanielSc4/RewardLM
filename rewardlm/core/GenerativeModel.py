@@ -80,7 +80,7 @@ class GenerativeModel:
             bias = 'none',
             task_type = 'CAUSAL_LM',
         )
-        self.model = prepare_model_for_int8_training(self.model, output_embedding_layer_name="embed_out")
+        self.model = prepare_model_for_int8_training(self.model)
         self.model = get_peft_model(self.model, lora_config)
     
     def wrap_valueHead(self):
