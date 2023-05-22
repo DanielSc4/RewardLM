@@ -107,6 +107,14 @@ class GenerativeModel:
             torch_dataset: torch.utils.data.Dataset, 
             optimized: bool = False,
         ):
+        """fine tune the model with the data provided
+
+        Args:
+            torch_dataset (torch.utils.data.Dataset): dataset containing the training data (torch Dataset, already tokenized)
+            optimized (bool, optional): True for 8-bit and LoRA optimization (PEFT, Perforcance-efficient fine-tuning). Defaults to False.
+        
+            reference notebook from huggingface: https://colab.research.google.com/drive/1jCkpikz0J2o20FBQmYmAGdiKmJGOMo-o?usp=sharing#scrollTo=MDqJWba-tpnv
+        """
         if optimized:
             assert self.load_dtype == '8-bit', '8 bit mode required for PEFT (optimized)'
         
@@ -115,15 +123,15 @@ class GenerativeModel:
         # freeze all layers and cast the layer-norm (and the output) to float32 for stability
         for param in self.model.parameters():
             param.requires_grad = False     # freeze
-            if param.ndim == 1:
+            if param.ndim == 1 and optimized:
                 param.data = param.data.to(torch.float32)
 
         self.model.gradient_checkpointing_enable()
         self.model.enable_input_require_grads()     # Enables the gradients for the input embeddings. This is useful for fine-tuning adapter weights while keeping the model weights fixed.
 
-
-        self.model.lm_head = CastOutputToFloat(self.model.lm_head)
-        self.apply_LoRA()
+        if optimized:
+            self.model.lm_head = CastOutputToFloat(self.model.lm_head)
+            self.apply_LoRA()
         self.print_trainable_parameters()
 
         ## Training
@@ -144,5 +152,30 @@ class GenerativeModel:
         )
         
         trainer.train()
+    
+    def inference_fine_tuned(self, tokenized_batch: dict, return_decoded: bool = False):
+        """Use the trained model to generate
+
+        Args:
+            tokenized_batch (dict): input_ids and attention_mask for model input
+            return_decoded (bool, optional): True returns a string instead of the model output. Defaults to False.
+
+        Returns:
+            model_output: raw output of the model (to be decoded by the tokenizer) or str if `return_decoded == True`
+        """
+
+
+        if self.optimized:
+            with torch.cuda.amp.autocast():
+                output_model = self.model.generate(**tokenized_batch, generation_config = self.generation_config)
+        else:
+            with torch.no_grad():
+                output_model = self.model.generate(**tokenized_batch, generation_config = self.generation_config)
+    
+        if return_decoded:
+            self.tokenizer.decode(output_model[0], skip_special_tokens = True)
+        
+        return output_model
+
         
         
