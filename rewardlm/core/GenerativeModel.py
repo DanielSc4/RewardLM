@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig, Trainer, TrainingArguments
+from accelerate import Accelerator
 
 from peft import LoraConfig, get_peft_model, prepare_model_for_int8_training
 from trl import AutoModelForCausalLMWithValueHead
@@ -14,7 +15,7 @@ class CastOutputToFloat(nn.Sequential):
 
 
 class GenerativeModel:
-    def __init__(self, model_id: str, device: str = None, load_dtype: str = 'fp32', generation_config: GenerationConfig = None) -> None:
+    def __init__(self, model_id: str, device: str = None, load_dtype: str = 'fp32', generation_config: GenerationConfig = None, accelerator_kwargs: dict = {},) -> None:
         """Wrapper class for all the generative models from 🤗 HuggingFace
 
         Args:
@@ -23,7 +24,7 @@ class GenerativeModel:
         """
 
         self.model_id = model_id
-    
+        self.accelerator = Accelerator(**accelerator_kwargs)
 
         if generation_config is None:
             self.generation_config = GenerationConfig(
@@ -39,14 +40,12 @@ class GenerativeModel:
             self.generation_config = generation_config
 
         self.load_dtype = load_dtype
+        self.device = device
 
-        if device is None:
-            self.device = device_selector()
-        else:
-            assert load_dtype != '8-bit', '"8-bit" mode cannot be used with devices other than "cuda"'
-            self.device = device
+        if self.device is None:
+            self.device = self.accelerator.device
 
-        
+            
         
         if load_dtype == '8-bit':
             self.model = AutoModelForCausalLM.from_pretrained(
