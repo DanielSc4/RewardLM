@@ -1,8 +1,8 @@
-datasets==2.11.0
-pandas==1.5.3
-torch==2.0.0
-tqdm==4.65.0
-transformers==4.27.1
+datasets
+pandas
+torch
+tqdm
+transformers
 accelerate
 bitsandbytes
 peft
