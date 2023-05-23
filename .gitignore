@@ -77,3 +77,4 @@ pip-delete-this-directory.txt
 ### CustomFolders ###
 output_figures/*
 tests/checkpoints/*
+tests/wandb/*

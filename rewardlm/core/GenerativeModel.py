@@ -45,7 +45,7 @@ class GenerativeModel:
         if self.device is None:
             self.device = self.accelerator.device
 
-            
+
         
         if load_dtype == '8-bit':
             self.model = AutoModelForCausalLM.from_pretrained(
@@ -90,7 +90,7 @@ class GenerativeModel:
             bias = 'none',
             task_type = 'CAUSAL_LM',
         )
-        self.model = prepare_model_for_int8_training(self.model)
+        self.model = prepare_model_for_int8_training(self.model)    # double check
         self.model = get_peft_model(self.model, lora_config)
     
 
@@ -125,11 +125,20 @@ class GenerativeModel:
             if param.ndim == 1 and optimized:
                 param.data = param.data.to(torch.float32)
 
+
+        self.model.use_cache = False                # silence the warnings. Please re-enable for inference!
         self.model.gradient_checkpointing_enable()
         self.model.enable_input_require_grads()     # Enables the gradients for the input embeddings. This is useful for fine-tuning adapter weights while keeping the model weights fixed.
 
+        
+        # cast final tensor logits to torch.float32
+        setattr(
+            self.model,
+            list(self.model.named_children())[-1][0],    # name of the attribute
+            CastOutputToFloat(getattr(self.model, list(self.model.named_children())[-1][0]))
+        )
+
         if optimized:
-            self.model.lm_head = CastOutputToFloat(self.model.lm_head)
             self.apply_LoRA()
         self.print_trainable_parameters()
 
@@ -143,14 +152,16 @@ class GenerativeModel:
                 gradient_accumulation_steps = 4,
                 warmup_steps = 100,
                 max_steps = 200,
+                optim = 'adamw_torch',
                 learning_rate = 2e-4,
-                fp16 = True,
+                fp16 = True if optimized else False,
                 logging_steps = 1,
                 output_dir = './checkpoints/fine_tune/',
             )
         )
         
         trainer.train()
+        self.model.use_cache = True         # re-enable for inference
     
     def inference_fine_tuned(self, tokenized_batch: dict, return_decoded: bool = False):
         """Use the trained model to generate
