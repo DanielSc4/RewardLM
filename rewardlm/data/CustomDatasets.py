@@ -38,7 +38,30 @@ class PromptsDataset(Dataset):
             # 'token_type_ids': self.text['token_type_ids'][idx],
             'attention_mask': self.text['attention_mask'][idx],
         }
+
+class PromptDataset_CLM(Dataset):
+    def __init__(self, text, tokenizer, custom_prompt = '{prompt}') -> None:
+        assert '{prompt}' in custom_prompt
+
+        self.tokenizer = tokenizer
+
+        # adjusting prompt based on custom_prompt parameter
+        adj_prompt = list(map(
+            lambda s: custom_prompt.format(prompt = s), 
+            text)
+        )
+
+        self.tokenized = list(map(
+            lambda samples: self.tokenizer(samples), 
+            adj_prompt,
+        ))
     
+    def __len__(self,):
+        return len(self.tokenized)
+    
+    def __getitem__(self, index):
+        return self.tokenized[index]
+
 
 
 # dataset containing the pair (prompt, response) to measure the toxicity

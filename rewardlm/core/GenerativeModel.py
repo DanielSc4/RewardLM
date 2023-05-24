@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import transformers
 from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig, Trainer, TrainingArguments
 from accelerate import Accelerator
 
@@ -126,7 +127,7 @@ class GenerativeModel:
                 param.data = param.data.to(torch.float32)
 
 
-        self.model.use_cache = False                # silence the warnings. Please re-enable for inference!
+        self.model.config.use_cache = False                # silence the warnings. Please re-enable for inference!
         self.model.gradient_checkpointing_enable()
         self.model.enable_input_require_grads()     # Enables the gradients for the input embeddings. This is useful for fine-tuning adapter weights while keeping the model weights fixed.
 
@@ -157,11 +158,12 @@ class GenerativeModel:
                 fp16 = True if optimized else False,
                 logging_steps = 1,
                 output_dir = './checkpoints/fine_tune/',
-            )
+            ),
+            data_collator = transformers.DataCollatorForLanguageModeling(self.tokenizer, mlm = False)
         )
         
         trainer.train()
-        self.model.use_cache = True         # re-enable for inference
+        self.model.config.use_cache = True         # re-enable for inference
     
     def inference_fine_tuned(self, tokenized_batch: dict, return_decoded: bool = False):
         """Use the trained model to generate
