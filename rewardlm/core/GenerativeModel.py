@@ -144,7 +144,6 @@ class GenerativeModel:
         self.print_trainable_parameters()
 
         ## Training
-
         trainer = Trainer(
             model = self.model,
             train_dataset = torch_dataset,
