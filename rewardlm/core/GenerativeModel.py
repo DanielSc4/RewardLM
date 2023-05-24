@@ -106,6 +106,7 @@ class GenerativeModel:
             self,
             torch_dataset: torch.utils.data.Dataset, 
             optimized: bool = False,
+            lr: float = 2e-4,
         ):
         """fine tune the model with the data provided
 
@@ -153,7 +154,7 @@ class GenerativeModel:
                 warmup_steps = 100,
                 max_steps = 200,
                 optim = 'adamw_torch',
-                learning_rate = 2e-4,
+                learning_rate = lr,
                 fp16 = True if optimized else False,
                 logging_steps = 1,
                 output_dir = './checkpoints/fine_tune/',
