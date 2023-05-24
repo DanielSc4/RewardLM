@@ -9,4 +9,4 @@ peft
 loralib
 wandb
 trl
-huggingface_hub
+huggingface-hub
