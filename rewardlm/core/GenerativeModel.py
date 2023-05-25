@@ -118,7 +118,7 @@ class GenerativeModel:
         """
         if optimized:
             assert self.load_dtype == '8-bit', '8 bit mode required for PEFT (optimized)'
-        
+
 
         # apply some post-processing on the 8-bit model to enable training
         # freeze all layers and cast the layer-norm (and the output) to float32 for stability
@@ -189,5 +189,5 @@ class GenerativeModel:
         
         return output_model
 
-        
-        
+
+
