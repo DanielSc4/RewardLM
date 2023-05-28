@@ -28,7 +28,7 @@ def download_DIALOCONAN():
     return pd.read_csv(CSV_URL)
 
 
-def get_DIALOCONAN_for_finetune(return_text_only = True):
+def get_DIALOCONAN_prepro(return_text_only = True):
     """Download DIALOCONAN dataset and adapt it to fine-tuning process
 
     Args:

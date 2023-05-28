@@ -8,11 +8,100 @@ Reward a Language Model with pancakes 🥞
 Toxicity meter allows measuring the toxicity of generative LM based on the output of a classifier ([RoBERTa for hate speech](https://huggingface.co/facebook/roberta-hate-speech-dynabench-r4-target))
 
 
-`...TBD...`
+1. Choose `model_id`, `batchsize` and (opt) generation parameters:
+```python
+model_id = 'bigscience/bloomz-3b'
+batchsize = 16
+generation_config = GenerationConfig(
+    max_new_tokens = 25,
+    num_beams = 5,
+    early_stopping = True,
+    # crashes while using batchsize > 1 on mps device if not set:
+    pad_token_id = 0,
+    temperature = 0.8,
+    top_p = .8,
+    # diversity_penalty = .1, # should use num_beam_groups > 1
+)
+
+load_dtype = 'bf16' # can be ['8-bit', 'bf16', 'fp32']
+toxicity_meter = ToxicityMeter(
+    model_id = model_id,
+    load_dtype = load_dtype,
+    toxicity_model_id = reward_model_id,
+    device = device_selector(),
+    generation_config = generation_config,
+)
+```
+
+2. Customize your prompt from the original dataset and generate the `toxicity_df` dataset:
+```python
+custom_prompt = ('Statement: "{prompt}".\nResponse: ')
+# custom prompts required by the original paper of RedPajama
+if model_id == 'togethercomputer/RedPajama-INCITE-Chat-3B-v1':
+    custom_prompt = ('<human>: "{prompt}"\n<bot>: ')
+
+toxicity_df = toxicity_meter.measure_toxicity(
+    text_prompt = dataset[query]['text'].to_list(),
+    custom_prompt = custom_prompt, 
+    generation_config = generation_config,
+    batch_size = batchsize,
+)
+```
+
+3. Save the obtained results:
+```python
+# save csv in tmp folder
+fld = './result analysis/tmp'
+toxicity_df.to_csv(
+    fld + f'/measured_tox_instruct_{model_id.split("/")[-1]}_{load_dtype}.csv'
+)
+```
+
+
 
 ### 🥞 Reinforcement Learning with Automatic Feedback (RLAF)
 
-`...TBD...`
+
+This module allows the use of reinforcement learning algorithms (specifically [PPO](https://openai.com/research/openai-baselines-ppo)) to optimise models according to a direction decided by the reward model. The process is similar to [RLHF](https://en.wikipedia.org/wiki/Reinforcement_learning_from_human_feedback) (Reinforcement Learning from Human Feedback) but removes the human component from the loop to automate the process.
+
+`TODO`: add possibility of using a reward manager as a reward model, to have more control over the reward system
+
+To 🥞 Reward a generative LM using the DIALCONAN dataset:
+
+1. Select the generative and reward models you intend to use and other hyperparameters:
+```python
+from rewardlm.core.RL.RLModel import RLModel
+import torch
+
+rlmanager = RLModel(
+    model_id = 'EleutherAI/pythia-70m',
+    reward_model_id = 'facebook/roberta-hate-speech-dynabench-r4-target',
+    optimized = True,   # use 8-bit PEFT
+    # log_method = 'wandb',
+    bs = 256,
+    # force the use of CPU on Apple Silicon devices (mps not supported):
+    accelerator_kwargs = {
+        'cpu': False if torch.cuda.is_available() else True,
+    },
+)
+```
+
+2. Download the original dataset using the built in preprocessing functions:
+```python
+from rewardlm.data.data_utils import get_DIALOCONAN_prepro
+
+data = get_DIALOCONAN_prepro()
+dataset = rlmanager.generate_dataset(
+    text = data,
+    max_len = 50,
+)
+```
+
+3. Start the PPO learning algorithm:
+```python
+history = rlmanager.train_PPO(dataset = dataset)
+```
+
 
 ### 👨🏼‍🏫 Model fine-tune
 Each generative model can be fine-tuned on the same data used for Reinforcement Learning. In this way, it is possible to compare the results obtained from both techniques.
@@ -37,10 +126,10 @@ generator_manager = GenerativeModel(
 2. Download the original dataset using the built in preprocessing functions:
 
 ```python
-from rewardlm.data.data_utils import get_DIALOCONAN_for_finetune
+from rewardlm.data.data_utils import get_DIALOCONAN_prepro
 from rewardlm.data.CustomDatasets import PromptDataset_CLM
 
-data = get_DIALOCONAN_for_finetune()
+data = get_DIALOCONAN_prepro()
 
 dataset = PromptDataset_CLM(
     tokenizer = generator_manager.tokenizer,
