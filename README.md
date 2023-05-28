@@ -3,12 +3,48 @@ Reward a Language Model with pancakes 🥞
 
 
 ## **Usage**
-### 💀 ToxicityMeter
+### ⚖️ ToxicityMeter
 
-Toxicity meter allows measuring the toxicity of generative models based on the output of a classifier ([RoBERTa for hate speech](https://huggingface.co/facebook/roberta-hate-speech-dynabench-r4-target))
+Toxicity meter allows measuring the toxicity of generative LM based on the output of a classifier ([RoBERTa for hate speech](https://huggingface.co/facebook/roberta-hate-speech-dynabench-r4-target))
 
 
 `...TBD...`
+
+### 🥞 Reinforcement Learning with Automatic Feedback (RLAF)
+
+`...TBD...`
+
+### 👨🏼‍🏫 Model fine-tune
+Each generative model can be fine-tuned on the same data used for Reinforcement Learning. In this way, it is possible to compare the results obtained from both techniques.
+
+`...TBD...`
+
+
+
+
+
+## Tested Models and datasets
+#### **Generative language models:**
+- `LaMini-LM`: Small-sized collection of efficient language models distilled from ChatGPT and trained on a large-scale dataset of 2.58M instructions [GitHub](https://github.com/mbzuai-nlp/LaMini-LM/), [Paper](https://arxiv.org/abs/2304.14402)
+
+- `RedPajama-*`: [Source](https://www.together.xyz/blog/redpajama-models-v1)
+
+- `BloomZ`: Family of models capable of following human instructions in dozens of languages zero-shot [GitHub](https://github.com/bigscience-workshop/xmtf), [Paper](https://arxiv.org/abs/2211.01786)
+
+- `Pythia`: *Predominantly abandoned in favour of instructed models.* Model(s) that combines interpretability analysis and scaling laws to understand how knowledge develops and evolves during training in autoregressive transformers. [GitHub](https://github.com/EleutherAI/pythia), [Paper](https://arxiv.org/pdf/2304.01373.pdf)
+
+#### **Datasets:**
+- `Real Toxicity Prompts`: Mainly used for the ⚖️ `ToxicityMeter` module. Dataset of 100K naturally occurring, sentence-level prompts derived from a large corpus of English web text, paired with toxicity scores from a widely-used toxicity classifier. [GitHub](https://github.com/allenai/real-toxicity-prompts), [Paper](https://www.semanticscholar.org/paper/RealToxicityPrompts%3A-Evaluating-Neural-Toxic-in-Gehman-Gururangan/399e7d8129c60818ee208f236c8dda17e876d21f)
+
+- `DIALOCONAN`: Mainly used for 👨🏼‍🏫 `fine-tuning` and 🥞 `RLAF` modules. Datasets of counter-narratives to fight online hate speech. [GitHub](https://github.com/marcoguerini/CONAN#dialoconan), [Paper](https://arxiv.org/pdf/2211.03433v1.pdf)
+
+#### **Reward models:**
+- `roberta-hate-speech-dynabench-r4-target`: Model trained on ∼40,000 entries, generated and labelled by trained annotators over four rounds
+of dynamic data creation. [Paper](https://arxiv.org/pdf/2012.15761.pdf)
+
+
+
+
 
 ## **Development**
 ### How to setup on [Google Colab](https://colab.research.google.com/):
