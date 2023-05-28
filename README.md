@@ -17,7 +17,44 @@ Toxicity meter allows measuring the toxicity of generative LM based on the outpu
 ### 👨🏼‍🏫 Model fine-tune
 Each generative model can be fine-tuned on the same data used for Reinforcement Learning. In this way, it is possible to compare the results obtained from both techniques.
 
-`...TBD...`
+To fine-tune a generative model using the DIALCONAN dataset:
+
+1. Select the model you intend to use and the `GenerativeModel` to get the use it:
+```python
+from rewardlm.core.GenerativeModel import GenerativeModel
+model_id = 'facebook/opt-350m'
+generator_manager = GenerativeModel(
+    model_id,
+    load_dtype = '8-bit' if torch.cuda.is_available() else 'fp32',
+    # force the use of CPU on Apple Silicon devices (mps not supported):
+    accelerator_kwargs = {
+        'cpu': False if torch.cuda.is_available() else True,
+    },
+)
+```
+
+2. Download the original dataset using the built in preprocessing functions:
+
+```python
+from rewardlm.data.data_utils import get_DIALOCONAN_for_finetune
+from rewardlm.data.CustomDatasets import PromptDataset_CLM
+
+data = get_DIALOCONAN_for_finetune()
+
+dataset = PromptDataset_CLM(
+    tokenizer = generator_manager.tokenizer,
+    text = data,
+    custom_prompt = custom_prompt,
+)
+```
+
+3. Start the fine-tutning process:
+```python
+generator_manager.fine_tune(
+    torch_dataset = dataset, 
+    optimized = True if torch.cuda.is_available() else False,
+)
+```
 
 
 
