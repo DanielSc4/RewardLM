@@ -1,5 +1,7 @@
 import pandas as pd
+import numpy as np
 from datasets import load_dataset
+
 from torch.utils.data import DataLoader
 
 from ..data.CustomDatasets import PromptsDataset
@@ -24,6 +26,47 @@ def get_real_toxicity_prompts():
 def download_DIALOCONAN():
     CSV_URL = 'https://raw.githubusercontent.com/marcoguerini/CONAN/master/DIALOCONAN/DIALOCONAN.csv'
     return pd.read_csv(CSV_URL)
+
+
+def get_DIALOCONAN_for_finetune(return_text_only = True):
+    """Download DIALOCONAN dataset and adapt it to fine-tuning process
+
+    Args:
+        return_text_only (bool, optional): if False return (dict) having dialog_id as id. True returns a list of text. Defaults to True.
+
+    Returns:
+        dict | list: check return_text_only arg
+    """
+
+    dataset = download_DIALOCONAN()
+    
+    def _pairwise(iterable):
+        a = iter(iterable)
+        return zip(a, a)
+    
+    new_df = {}
+    for idx in np.unique(dataset['dialogue_id']):
+        new_df[idx] = {}
+        for i, (u_text, a_text) in enumerate(_pairwise(dataset[dataset['dialogue_id'] == idx]['text'])):
+            if i == 0:
+                new_df[idx][i] = "User: {u_text}\nAssistant: {a_text}".format(
+                    u_text = u_text.replace('\n', ' '), 
+                    a_text = a_text.replace('\n', ' ')
+                )
+            else:
+                new_df[idx][i] = new_df[idx][i - 1] + '\n' + "User: {u_text}\nAssistant: {a_text}".format(
+                    u_text = u_text.replace('\n', ' '), 
+                    a_text = a_text.replace('\n', ' ')
+                )
+    if return_text_only:
+        all_text = []
+        for dialog_id in new_df:
+            for num_ in new_df[dialog_id]:
+                all_text.append(new_df[dialog_id][num_])
+        return all_text
+    else:
+        return new_df
+
 
 
 def gen_benchmark_data(
