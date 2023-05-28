@@ -22,6 +22,7 @@ To fine-tune a generative model using the DIALCONAN dataset:
 1. Select the model you intend to use and the `GenerativeModel` to get the use it:
 ```python
 from rewardlm.core.GenerativeModel import GenerativeModel
+
 model_id = 'facebook/opt-350m'
 generator_manager = GenerativeModel(
     model_id,
