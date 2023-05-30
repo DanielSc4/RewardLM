@@ -1,9 +1,106 @@
 # 🥞 **RewardLM**
 Reward a Language Model with pancakes 🥞
 
+## `TODO`:
+- [ ] Add possibility of using a reward manager as a reward model, to have more control over the reward system.
+- [ ] Compatibility of ⚖️ ToxicityMeter with other datasets (possibly instructional).
+- [ ] Extend ⚖️ ToxicityMeter compatibility with 🤗 Accelerate.
+- [ ] Extend the possibility of managing parameters and configurations to 🥞RLAF.
+- [ ] Use of [Inseq](https://github.com/inseq-team/inseq) for analysis and interpretability of generative models at ⚖️ ToxicityMeter.
+
 
 ## **Usage**
-### ⚖️ ToxicityMeter
+This repository gathers three main modules. Their operation is shared, allowing the training of any generative model following the two main techniques of Reinforcement Learning w/ PPO (🥞 RLAF) and the more classical 👨🏼‍🏫 fine-tune using PEFT techniques. The third module, ⚖️ Toxicity Meter, deals with measuring the toxicity of the responses of the generative model, whether pre-trained or after the 🥞 RLAF/👨🏼‍🏫 fine-tune process.
+
+
+### **🥞 Reinforcement Learning with Automatic Feedback (RLAF)**
+
+
+This module allows the use of reinforcement learning algorithms (specifically [PPO](https://openai.com/research/openai-baselines-ppo)) to optimise models according to a direction decided by the reward model. The process is similar to [RLHF](https://en.wikipedia.org/wiki/Reinforcement_learning_from_human_feedback) (Reinforcement Learning from Human Feedback) but removes the human component from the loop to automate the process.
+
+To 🥞 Reward a generative LM using the DIALCONAN dataset:
+
+1. Select the generative and reward models you intend to use and other hyperparameters:
+```python
+import torch
+from rewardlm.core.RL.RLModel import RLModel
+
+rlmanager = RLModel(
+    model_id = 'EleutherAI/pythia-70m',
+    reward_model_id = 'facebook/roberta-hate-speech-dynabench-r4-target',
+    optimized = True,   # use 8-bit PEFT
+    # log_method = 'wandb',
+    bs = 256,
+    # force the use of CPU on Apple Silicon devices (mps not supported):
+    accelerator_kwargs = {
+        'cpu': False if torch.cuda.is_available() else True,
+    },
+)
+```
+
+2. Download the original dataset using the built in preprocessing functions:
+```python
+from rewardlm.data.data_utils import get_DIALOCONAN_prepro
+
+data = get_DIALOCONAN_prepro()
+dataset = rlmanager.generate_dataset(
+    text = data,
+    max_len = 50,
+)
+```
+
+3. Start the PPO learning algorithm:
+```python
+history = rlmanager.train_PPO(dataset = dataset)
+```
+
+
+### **👨🏼‍🏫 Model fine-tune**
+Each generative model can be fine-tuned on the same data used for Reinforcement Learning. In this way, it is possible to compare the results obtained from both techniques.
+
+To fine-tune a generative model using the DIALCONAN dataset:
+
+1. Select the model you intend to use and the `GenerativeModel` to get the use it:
+```python
+import torch
+from rewardlm.core.GenerativeModel import GenerativeModel
+
+model_id = 'facebook/opt-350m'
+generator_manager = GenerativeModel(
+    model_id,
+    load_dtype = '8-bit' if torch.cuda.is_available() else 'fp32',
+    # force the use of CPU on Apple Silicon devices (mps not supported):
+    accelerator_kwargs = {
+        'cpu': False if torch.cuda.is_available() else True,
+    },
+)
+```
+
+2. Download the original dataset using the built in preprocessing functions:
+
+```python
+from rewardlm.data.data_utils import get_DIALOCONAN_prepro
+from rewardlm.data.CustomDatasets import PromptDataset_CLM
+
+data = get_DIALOCONAN_prepro()
+
+dataset = PromptDataset_CLM(
+    tokenizer = generator_manager.tokenizer,
+    text = data,
+    custom_prompt = custom_prompt,
+)
+```
+
+3. Start the fine-tutning process:
+```python
+generator_manager.fine_tune(
+    torch_dataset = dataset, 
+    optimized = True if torch.cuda.is_available() else False,
+)
+```
+
+
+### **⚖️ ToxicityMeter**
 
 Toxicity meter allows measuring the toxicity of generative LM based on the output of a classifier ([RoBERTa for hate speech](https://huggingface.co/facebook/roberta-hate-speech-dynabench-r4-target))
 
@@ -63,97 +160,6 @@ toxicity_df.to_csv(
     fld + f'/measured_tox_instruct_{model_id.split("/")[-1]}_{load_dtype}.csv'
 )
 ```
-
-
-
-### 🥞 Reinforcement Learning with Automatic Feedback (RLAF)
-
-
-This module allows the use of reinforcement learning algorithms (specifically [PPO](https://openai.com/research/openai-baselines-ppo)) to optimise models according to a direction decided by the reward model. The process is similar to [RLHF](https://en.wikipedia.org/wiki/Reinforcement_learning_from_human_feedback) (Reinforcement Learning from Human Feedback) but removes the human component from the loop to automate the process.
-
-`TODO`: add possibility of using a reward manager as a reward model, to have more control over the reward system
-
-To 🥞 Reward a generative LM using the DIALCONAN dataset:
-
-1. Select the generative and reward models you intend to use and other hyperparameters:
-```python
-import torch
-from rewardlm.core.RL.RLModel import RLModel
-
-rlmanager = RLModel(
-    model_id = 'EleutherAI/pythia-70m',
-    reward_model_id = 'facebook/roberta-hate-speech-dynabench-r4-target',
-    optimized = True,   # use 8-bit PEFT
-    # log_method = 'wandb',
-    bs = 256,
-    # force the use of CPU on Apple Silicon devices (mps not supported):
-    accelerator_kwargs = {
-        'cpu': False if torch.cuda.is_available() else True,
-    },
-)
-```
-
-2. Download the original dataset using the built in preprocessing functions:
-```python
-from rewardlm.data.data_utils import get_DIALOCONAN_prepro
-
-data = get_DIALOCONAN_prepro()
-dataset = rlmanager.generate_dataset(
-    text = data,
-    max_len = 50,
-)
-```
-
-3. Start the PPO learning algorithm:
-```python
-history = rlmanager.train_PPO(dataset = dataset)
-```
-
-
-### 👨🏼‍🏫 Model fine-tune
-Each generative model can be fine-tuned on the same data used for Reinforcement Learning. In this way, it is possible to compare the results obtained from both techniques.
-
-To fine-tune a generative model using the DIALCONAN dataset:
-
-1. Select the model you intend to use and the `GenerativeModel` to get the use it:
-```python
-import torch
-from rewardlm.core.GenerativeModel import GenerativeModel
-
-model_id = 'facebook/opt-350m'
-generator_manager = GenerativeModel(
-    model_id,
-    load_dtype = '8-bit' if torch.cuda.is_available() else 'fp32',
-    # force the use of CPU on Apple Silicon devices (mps not supported):
-    accelerator_kwargs = {
-        'cpu': False if torch.cuda.is_available() else True,
-    },
-)
-```
-
-2. Download the original dataset using the built in preprocessing functions:
-
-```python
-from rewardlm.data.data_utils import get_DIALOCONAN_prepro
-from rewardlm.data.CustomDatasets import PromptDataset_CLM
-
-data = get_DIALOCONAN_prepro()
-
-dataset = PromptDataset_CLM(
-    tokenizer = generator_manager.tokenizer,
-    text = data,
-    custom_prompt = custom_prompt,
-)
-```
-
-3. Start the fine-tutning process:
-```python
-generator_manager.fine_tune(
-    torch_dataset = dataset, 
-    optimized = True if torch.cuda.is_available() else False,
-)
-```
-
 
 
 
