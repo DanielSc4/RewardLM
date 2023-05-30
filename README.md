@@ -10,7 +10,12 @@ Toxicity meter allows measuring the toxicity of generative LM based on the outpu
 
 1. Choose `model_id`, `batchsize` and (opt) generation parameters:
 ```python
+from transformers import GenerationConfig
+from rewardlm.ToxicityMeter import ToxicityMeter
+from rewardlm.utils.general_utils import device_selector
+
 model_id = 'bigscience/bloomz-3b'
+reward_model_id = 'facebook/roberta-hate-speech-dynabench-r4-target'
 batchsize = 16
 generation_config = GenerationConfig(
     max_new_tokens = 25,
@@ -35,13 +40,15 @@ toxicity_meter = ToxicityMeter(
 
 2. Customize your prompt from the original dataset and generate the `toxicity_df` dataset:
 ```python
-custom_prompt = ('Statement: "{prompt}".\nResponse: ')
+from rewardlm.data.data_utils import get_real_toxicity_prompts
+
+custom_prompt = ('User: "{prompt}".\nAssistant: ')
 # custom prompts required by the original paper of RedPajama
 if model_id == 'togethercomputer/RedPajama-INCITE-Chat-3B-v1':
     custom_prompt = ('<human>: "{prompt}"\n<bot>: ')
 
 toxicity_df = toxicity_meter.measure_toxicity(
-    text_prompt = dataset[query]['text'].to_list(),
+    text_prompt = get_real_toxicity_prompts()['text'].to_list(),
     custom_prompt = custom_prompt, 
     generation_config = generation_config,
     batch_size = batchsize,
@@ -70,8 +77,8 @@ To 🥞 Reward a generative LM using the DIALCONAN dataset:
 
 1. Select the generative and reward models you intend to use and other hyperparameters:
 ```python
-from rewardlm.core.RL.RLModel import RLModel
 import torch
+from rewardlm.core.RL.RLModel import RLModel
 
 rlmanager = RLModel(
     model_id = 'EleutherAI/pythia-70m',
@@ -110,6 +117,7 @@ To fine-tune a generative model using the DIALCONAN dataset:
 
 1. Select the model you intend to use and the `GenerativeModel` to get the use it:
 ```python
+import torch
 from rewardlm.core.GenerativeModel import GenerativeModel
 
 model_id = 'facebook/opt-350m'
@@ -178,8 +186,8 @@ of dynamic data creation. [Paper](https://arxiv.org/pdf/2012.15761.pdf)
 1. Import the main notebook in colab
 2. Include the following cell at the beginning:
 ```bash
-!git clone https://__TOKEN_GIT__:@github.com/DanielSc4/RL-on-LM.git
-%cd RL-on-LM/
+!git clone https://__TOKEN_GIT__:@github.com/DanielSc4/RewardLM.git
+%cd RewardLM/
 !pip install -r requirements.txt
 from huggingface_hub import login
 login(token = '__TOKEN_HF__')
