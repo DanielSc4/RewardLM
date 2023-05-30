@@ -139,18 +139,20 @@ class RLModel:
                     generation_config = self.generator_manager.generation_config,
                 )
                 responses.append(response.squeeze()[len(prompt):])
-            batch['response'] = [
-                self.generator_manager.tokenizer.decode(r.squeeze()) for r in responses
-            ]
 
             batch['prompt'] = [
                 self.generator_manager.tokenizer.decode(p.squeeze(), skip_special_tokens = True) for p in batch["input_ids"]
             ]
 
-            # compute reward
-            # texts = [
-            #     q + r for q, r in zip(batch['prompt'], batch['response'])
-            # ]
+            batch['response'] = [
+                self.generator_manager.tokenizer.decode(r.squeeze(), skip_special_tokens = True) for r in responses
+            ]
+            
+            # ### DEBUG pt.2
+            # ### print statement to check the prompt, response pair of the current batch
+            # for i, (pro, res) in enumerate(zip(batch['prompt'], batch['response'])):
+            #     print(f'{i}, \n\t -> {pro.rstrip()}\n\t --> {res.rstrip()}')
+            # ### END DEBUG pt.2
 
             model_tox_set = ToxicityGeneratedSet(
                 prompts = batch['prompt'],

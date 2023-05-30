@@ -2,6 +2,7 @@
 Reward a Language Model with pancakes 🥞
 
 ## `TODO`:
+- [ ] [fix] Fix short responses behavior (less than 4 tokens)
 - [ ] Add possibility of using a reward manager as a reward model, to have more control over the reward system.
 - [ ] Compatibility of ⚖️ ToxicityMeter with other datasets (possibly instructional).
 - [ ] Extend ⚖️ ToxicityMeter compatibility with 🤗 Accelerate.
@@ -10,7 +11,7 @@ Reward a Language Model with pancakes 🥞
 
 
 ## **Usage**
-This repository gathers three main modules. Their operation is shared, allowing the training of any generative model following the two main techniques of Reinforcement Learning w/ PPO (🥞 RLAF) and the more classical 👨🏼‍🏫 fine-tune using PEFT techniques. The third module, ⚖️ Toxicity Meter, deals with measuring the toxicity of the responses of the generative model, whether pre-trained or after the 🥞 RLAF/👨🏼‍🏫 fine-tune process.
+This repository gathers three main modules. Their operation is shared, allowing the training of any generative model following the two main techniques of Reinforcement Learning w/ PPO (🥞 RLAF) and the more classical 👨🏼‍🏫 fine-tune using PEFT techniques. The third module, ⚖️ Toxicity Meter, deals with measuring the toxicity of the responses of the generative model, whether pre-trained or after the 🥞 or 👨🏼‍🏫 process.
 
 
 ### **🥞 Reinforcement Learning with Automatic Feedback (RLAF)**
@@ -42,11 +43,8 @@ rlmanager = RLModel(
 ```python
 from rewardlm.data.data_utils import get_DIALOCONAN_prepro
 
-data = get_DIALOCONAN_prepro()
-dataset = rlmanager.generate_dataset(
-    text = data,
-    max_len = 50,
-)
+data = get_DIALOCONAN_prepro(delete_last_assistant_response = True)
+dataset = rlmanager.generate_dataset(text = data)
 ```
 
 3. Start the PPO learning algorithm:

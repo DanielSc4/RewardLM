@@ -28,7 +28,7 @@ def download_DIALOCONAN():
     return pd.read_csv(CSV_URL)
 
 
-def get_DIALOCONAN_prepro(return_text_only = True):
+def get_DIALOCONAN_prepro(return_text_only = True, delete_last_assistant_response = False):
     """Download DIALOCONAN dataset and adapt it to fine-tuning process
 
     Args:
@@ -47,17 +47,13 @@ def get_DIALOCONAN_prepro(return_text_only = True):
     new_df = {}
     for idx in np.unique(dataset['dialogue_id']):
         new_df[idx] = {}
-        for i, (u_text, a_text) in enumerate(_pairwise(dataset[dataset['dialogue_id'] == idx]['text'])):
-            if i == 0:
-                new_df[idx][i] = "User: {u_text}\nAssistant: {a_text}".format(
-                    u_text = u_text.replace('\n', ' '), 
-                    a_text = a_text.replace('\n', ' ')
-                )
-            else:
-                new_df[idx][i] = new_df[idx][i - 1] + '\n' + "User: {u_text}\nAssistant: {a_text}".format(
-                    u_text = u_text.replace('\n', ' '), 
-                    a_text = a_text.replace('\n', ' ')
-                )
+        clean_data = dataset[dataset['dialogue_id'] == idx]['text'].apply(lambda x: x.replace('\n', ' '))
+
+        old_pair = ''
+        for i, (ele1, ele2) in enumerate(_pairwise(clean_data)):
+            new_df[idx][i] = old_pair + f'User: {ele1}.\nAssistant: {ele2 if not delete_last_assistant_response else ""}'
+            old_pair += f'User: {ele1}.\nAssistant: {ele2}\n'
+
     if return_text_only:
         all_text = []
         for dialog_id in new_df:
