@@ -127,7 +127,6 @@ class RLModel:
         model_loader = self.accelerator.prepare(model_loader)
 
         for n_batch, batch in tqdm(enumerate(model_loader)):
-            print(f'batch n: {n_batch + 1}:')
             self.generator_manager.model.gradient_checkpointing_disable()
             self.generator_manager.model.config.use_cache = True
 
