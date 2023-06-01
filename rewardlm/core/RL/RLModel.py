@@ -5,6 +5,7 @@ import torch
 from torch.utils.data import DataLoader
 from trl import PPOConfig, PPOTrainer, set_seed
 from accelerate import Accelerator
+from transformers import GenerationConfig
 
 from ..GenerativeModel import GenerativeModel
 from ..RewardModel import RewardModel
@@ -26,6 +27,7 @@ class RLModel:
             seed: int = 42,
             log_method: str = None,
             accelerator_kwargs: dict = {},
+            generation_config: GenerationConfig = None,
         ) -> None:
         """Manager of the trl
 
@@ -47,7 +49,12 @@ class RLModel:
         self.accelerator = Accelerator(**accelerator_kwargs)
 
         set_seed(seed)
-        self.generator_manager = GenerativeModel(model_id, device = self.accelerator.device, load_dtype = dtype)
+        self.generator_manager = GenerativeModel(
+            model_id, 
+            device=self.accelerator.device, 
+            load_dtype=dtype, 
+            generation_config=generation_config,
+        )
         self.reward_manager = RewardModel(reward_model_id, device = self.accelerator.device)
 
         if optimized:
@@ -147,11 +154,11 @@ class RLModel:
                 self.generator_manager.tokenizer.decode(r.squeeze(), skip_special_tokens = True) for r in responses
             ]
             
-            # ### DEBUG pt.2
-            # ### print statement to check the prompt, response pair of the current batch
-            # for i, (pro, res) in enumerate(zip(batch['prompt'], batch['response'])):
-            #     print(f'{i}, \n\t -> {pro.rstrip()}\n\t --> {res.rstrip()}')
-            # ### END DEBUG pt.2
+            ### DEBUG pt.2
+            ### print statement to check the prompt, response pair of the current batch
+            for i, (pro, res) in enumerate(zip(batch['prompt'], batch['response'])):
+                print(f'{i}, \n -> "{pro.rstrip()}"\n\t --> "{res.rstrip()}"\n---------\n')
+            ### END DEBUG pt.2
 
             model_tox_set = ToxicityGeneratedSet(
                 prompts = batch['prompt'],
