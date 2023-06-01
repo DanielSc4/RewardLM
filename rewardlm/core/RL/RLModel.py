@@ -32,17 +32,17 @@ class RLModel:
         """Manager of the trl
 
         Args:
-            model_id (str): The model name
-            reward_model_id (str): The reward model name.
-            optimized (bool, optional) True if you want to use Performance Efficient Fine-Tuning and LoRA. Defaults to False.
-            lr (float, optional): learning rate. Defaults to 1.41e-5.
-            mini_bs (int, optional): PPO minibatch size. Defaults to 16.
-            bs (int, optional): batch size. Defaults to 256.
-            gradient_acc_steps (int, optional): the number of gradient accumulation steps. Defaults to 1.
-            device (str, optional): device on which the model should be trained. Defaults to 'cpu'.
-            seed (int, optionl): The seed. Defaults to 42.
-            log_method (str, optional): Log stats with ['wandb', 'tensorboard']. Defaults to None.
-            dataset (rewardlm.data.CustomDatasets.PromptsDataset): Dataset to be used. Defaults to None.
+            `model_id` (str): The model name
+            `reward_model_id` (str): The reward model name.
+            `optimized` (bool, optional) True if you want to use Performance Efficient Fine-Tuning and LoRA. Defaults to False.
+            `lr` (float, optional): learning rate. Defaults to 1.41e-5.
+            `mini_bs` (int, optional): PPO minibatch size. Defaults to 16.
+            `bs` (int, optional): batch size. Defaults to 256.
+            `gradient_acc_steps` (int, optional): the number of gradient accumulation steps. Defaults to 1.
+            `device` (str, optional): device on which the model should be trained. Defaults to 'cpu'.
+            `seed` (int, optionl): The seed. Defaults to 42.
+            `log_method` (str, optional): Log stats with ['wandb', 'tensorboard']. Defaults to None.
+            `dataset` (rewardlm.data.CustomDatasets.PromptsDataset): Dataset to be used. Defaults to None.
         """
         assert bs >= mini_bs, 'bs should be >= than mini_bs'
 
@@ -99,6 +99,13 @@ class RLModel:
     def collator(self, data):
         return dict((key, [d[key] for d in data]) for key in data[0])
     
+    def __get_no_response(self,):
+        """
+        Avoid the model generating only 50256 token (`end_of_text`). If so, this function provides a standard response of the model not answering back.
+
+        TODO: remove this behaviour by understanding why the model keeps generating no responses even if the generation config has a `min_new_tokens` set > 0!
+        """
+        return self.generator_manager.tokenizer("I don't want to answer.", return_tensors='pt')['input_ids']
     
     def train_PPO(
             self, 
@@ -149,15 +156,22 @@ class RLModel:
             batch['prompt'] = [
                 self.generator_manager.tokenizer.decode(p.squeeze(), skip_special_tokens = True) for p in batch["input_ids"]
             ]
+            
+            # ### DEBUG pt.1
+            # for i, gg in enumerate(responses):
+            #     print(f'{i}- {gg.shape}: {gg}')
+            # ### DEBUG pt.1
 
             batch['response'] = [
-                self.generator_manager.tokenizer.decode(r.squeeze(), skip_special_tokens = True) for r in responses
+                self.generator_manager.tokenizer.decode(
+                    r.squeeze() if len(r) > 4 else self.__get_no_response().squeeze(), skip_special_tokens = True
+                ) for r in responses
             ]
             
             ### DEBUG pt.2
             ### print statement to check the prompt, response pair of the current batch
             for i, (pro, res) in enumerate(zip(batch['prompt'], batch['response'])):
-                print(f'{i}, \n -> "{pro.rstrip()}"\n\t --> "{res.rstrip()}"\n---------\n')
+                print(f'{i}, \n -len: {len(pro)}-> "{pro.rstrip()}"\n\t -len: {len(res)}-> "{res.rstrip()}"\n---------\n')
             ### END DEBUG pt.2
 
             model_tox_set = ToxicityGeneratedSet(
