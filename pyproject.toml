@@ -23,6 +23,7 @@ ipykernel = "^6.23.1"
 matplotlib = "^3.7.1"
 ipywidgets = "^8.0.6"
 jupyter = "^1.0.0"
+huggingface-hub = "^0.14.1"
 
 
 [build-system]
