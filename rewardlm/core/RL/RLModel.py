@@ -44,7 +44,7 @@ class RLModel:
             `log_method` (str, optional): Log stats with ['wandb', 'tensorboard']. Defaults to None.
             `dataset` (rewardlm.data.CustomDatasets.PromptsDataset): Dataset to be used. Defaults to None.
         """
-        assert bs >= mini_bs, 'bs should be >= than mini_bs'
+        assert bs >= mini_bs, f'bs should be >= than mini_bs. Got bs: {bs}; mini_bs: {mini_bs}'
 
         self.accelerator = Accelerator(**accelerator_kwargs)
 
