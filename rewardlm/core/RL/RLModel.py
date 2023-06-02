@@ -201,11 +201,11 @@ class RLModel:
                 ) for r in responses
             ]
             
-            # ### DEBUG pt.2
-            # ### print statement to check the prompt, response pair of the current batch
-            # for i, (pro, res) in enumerate(zip(batch['prompt'], batch['response'])):
-            #     print(f'{i}, \n -len: {len(pro)}-> "{pro.rstrip()}"\n\t -len: {len(res)}-> "{res.rstrip()}"\n---------\n')
-            # ### END DEBUG pt.2
+            ### DEBUG pt.2
+            ### print statement to check the prompt, response pair of the current batch
+            for i, (pro, res) in enumerate(zip(batch['prompt'], batch['response'])):
+                print(f'Input n. {i}, \n\t --Prompt-len: {len(pro)}-> "{pro.rstrip()}"\n\t --Generation-len: {len(res)}-> "{res.rstrip()}"\n{"-"*20}\n')
+            ### END DEBUG pt.2
 
             model_tox_set = ToxicityGeneratedSet(
                 prompts = batch['prompt'],
@@ -238,4 +238,3 @@ class RLModel:
             
         return ppo_trainer, tot_stats
 
-        
