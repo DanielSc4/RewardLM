@@ -1,11 +1,15 @@
 # Performance-Efficient Fine-Tuning using Reinforcement Learning
 # Adaptation of https://github.com/lvwerra/trl/blob/main/examples/sentiment/scripts/gpt-neox-20b_peft/gpt-neo-20b_sentiment_peft.py
 
+from pyparsing import Any
 import torch
 from torch.utils.data import DataLoader
 from trl import PPOConfig, PPOTrainer, set_seed
 from accelerate import Accelerator
 from transformers import GenerationConfig
+import datasets
+from datasets import Dataset
+
 
 from ..GenerativeModel import GenerativeModel
 from ..RewardModel import RewardModel
@@ -77,7 +81,7 @@ class RLModel:
             text: list[str], 
             max_len: int = 256, 
             custom_prompt: str = '{prompt}'
-        ) -> torch.utils.data.Dataset:
+        ) -> torch.utils.data.Dataset | datasets.Dataset:
         """Build dataset from training
 
         Args:
@@ -88,33 +92,60 @@ class RLModel:
         Returns:
             torch.utils.data.Dataset: The torch dataset used for training
         """
-        return PromptsDataset(
-            tokenizer = self.generator_manager.tokenizer,
-            text = text,
-            max_len = max_len,
-            custom_prompt = custom_prompt,
+        # legacy:
+        # return PromptsDataset(
+        #     tokenizer = self.generator_manager.tokenizer,
+        #     text = text,
+        #     max_len = max_len,
+        #     custom_prompt = custom_prompt,
+        # )
+
+        adj_prompt = list(map(
+            lambda s: custom_prompt.format(prompt = s), 
+            text)
         )
-    
+        
+        self.generator_manager.tokenizer.pad_token = self.generator_manager.tokenizer.eos_token
+        ds = Dataset.from_dict({'text': adj_prompt})
+
+        def tokenize(sample):
+            prompt = sample['text']
+            # continuation = sample['continuation']
+
+            sample['input_ids'] = self.generator_manager.tokenizer.encode(prompt)
+            sample['query'] = self.generator_manager.tokenizer.decode(sample['input_ids'])
+            return sample
+        
+        ds = ds.map(tokenize, batched=False)
+        ds.set_format(type='torch')
+        ds = ds.train_test_split(test_size = .15, shuffle = False)['train']
+        return ds
+
 
     def collator(self, data):
-        return dict((key, [d[key] for d in data]) for key in data[0])
+        return dict(
+            (key, [d[key] for d in data]) for key in data[0]
+        )
     
-    def __get_no_response(self,):
-        """
-        Avoid the model generating only 50256 token (`end_of_text`). If so, this function provides a standard response of the model not answering back.
-
-        TODO: remove this behaviour by understanding why the model keeps generating no responses even if the generation config has a `min_new_tokens` set > 0!
-        """
-        return self.generator_manager.tokenizer("I don't want to answer.", return_tensors='pt')['input_ids']
     
     def train_PPO(
             self, 
-            dataset: torch.utils.data.Dataset, 
+            dataset: torch.utils.data.Dataset | datasets.Dataset, 
             model_save_path: str = './checkpoints/',
-        ):
+        ) -> tuple[PPOTrainer, dict[str, Any]]:
+        """Custom PPO trainer, train loop with automated reward system based on the `rewardlm.core.rewardModel` class
+
+        Args:
+            dataset (torch.utils.data.Dataset | datasets.Dataset): dataset, output from the `self.generate_dataset` fun
+            model_save_path (str, optional): Path to save the model. Defaults to './checkpoints/'.
+
+        Returns:
+            tuple[PPOTrainer, dict[str, Any]]: Trainer and stats about the training process
+        """
 
         tot_stats = []
 
+        # autoregressive model with a value head in addition to the language model head.
         self.generator_manager.wrap_valueHead()
 
         optimizer = torch.optim.Adam(
@@ -126,7 +157,7 @@ class RLModel:
             self.generator_manager.model, 
             ref_model = None, 
             tokenizer = self.generator_manager.tokenizer, 
-            # dataset = dataset, 
+            dataset = dataset, 
             # data_collator = self.collator, 
             optimizer = optimizer,
         )
@@ -138,7 +169,9 @@ class RLModel:
             drop_last = True,       # There is a ValueError if the last batch does not match the batchsize dimension! (trl/trainer/ppo_trainer.py:408)
         )
 
-        model_loader = self.accelerator.prepare(model_loader)
+        # legacy:
+        # model_loader = self.accelerator.prepare(model_loader)
+        model_loader = ppo_trainer.dataloader
 
         for n_batch, batch in tqdm(enumerate(model_loader)):
             self.generator_manager.model.gradient_checkpointing_disable()
@@ -168,11 +201,11 @@ class RLModel:
                 ) for r in responses
             ]
             
-            ### DEBUG pt.2
-            ### print statement to check the prompt, response pair of the current batch
-            for i, (pro, res) in enumerate(zip(batch['prompt'], batch['response'])):
-                print(f'{i}, \n -len: {len(pro)}-> "{pro.rstrip()}"\n\t -len: {len(res)}-> "{res.rstrip()}"\n---------\n')
-            ### END DEBUG pt.2
+            # ### DEBUG pt.2
+            # ### print statement to check the prompt, response pair of the current batch
+            # for i, (pro, res) in enumerate(zip(batch['prompt'], batch['response'])):
+            #     print(f'{i}, \n -len: {len(pro)}-> "{pro.rstrip()}"\n\t -len: {len(res)}-> "{res.rstrip()}"\n---------\n')
+            # ### END DEBUG pt.2
 
             model_tox_set = ToxicityGeneratedSet(
                 prompts = batch['prompt'],
