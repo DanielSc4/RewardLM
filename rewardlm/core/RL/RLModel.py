@@ -155,10 +155,10 @@ class RLModel:
         ppo_trainer = PPOTrainer(
             self.config, 
             self.generator_manager.model, 
-            ref_model = None, 
+            ref_model = None,   # let the PPO trainer deal with the reference model
             tokenizer = self.generator_manager.tokenizer, 
             dataset = dataset, 
-            # data_collator = self.collator, 
+            data_collator = self.collator,      # now providing w/ datasets.Dataset fun
             optimizer = optimizer,
         )
 
@@ -197,7 +197,7 @@ class RLModel:
 
             batch['response'] = [
                 self.generator_manager.tokenizer.decode(
-                    r.squeeze() if len(r) > 4 else self.__get_no_response().squeeze(), skip_special_tokens = True
+                    r.squeeze(), skip_special_tokens = True
                 ) for r in responses
             ]
             
@@ -237,11 +237,5 @@ class RLModel:
                     ppo_trainer.save_pretrained(model_save_path)
             
         return ppo_trainer, tot_stats
-
-    
-
-
-
-
 
         
