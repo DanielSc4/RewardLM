@@ -79,6 +79,7 @@ output_figures/*
 tests/checkpoints/*
 tests/wandb/*
 **/checkpoints/
+**/wandb
 
 # all files named __old*
 **/_old*
