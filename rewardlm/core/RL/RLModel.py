@@ -173,6 +173,7 @@ class RLModel:
         # model_loader = self.accelerator.prepare(model_loader)
         model_loader = ppo_trainer.dataloader
 
+        print(f'loader len: {len(model_loader)}')
         for n_batch, batch in tqdm(enumerate(model_loader)):
             self.generator_manager.model.gradient_checkpointing_disable()
             self.generator_manager.model.config.use_cache = True
@@ -201,11 +202,11 @@ class RLModel:
                 ) for r in responses
             ]
             
-            # ### DEBUG pt.2
-            # ### print statement to check the prompt, response pair of the current batch
-            # for i, (pro, res) in enumerate(zip(batch['prompt'], batch['response'])):
-            #     print(f'Input n. {i}, \n\t --Prompt-len: {len(pro)}-> "{pro.rstrip()}"\n\t --Generation-len: {len(res)}-> "{res.rstrip()}"\n{"-"*20}\n')
-            # ### END DEBUG pt.2
+            ### DEBUG pt.2
+            ### print statement to check the prompt, response pair of the current batch
+            for i, (pro, res) in enumerate(zip(batch['prompt'], batch['response'])):
+                print(f'Input n. {i}, \n\t --Prompt-len: {len(pro)}-> "{pro.rstrip()}"\n\t --Generation-len: {len(res)}-> "{res.rstrip()}"\n{"-"*20}\n')
+            ### END DEBUG pt.2
 
             model_tox_set = ToxicityGeneratedSet(
                 prompts = batch['prompt'],
