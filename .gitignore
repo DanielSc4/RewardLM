@@ -78,6 +78,7 @@ pip-delete-this-directory.txt
 output_figures/*
 tests/checkpoints/*
 tests/wandb/*
+**/checkpoints/
 
 # all files named __old*
 **/_old*
