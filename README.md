@@ -2,7 +2,8 @@
 Reward a Language Model with pancakes 🥞
 
 ## `TODO`:
-- [ ] [fix] Fix short responses behavior (less than 4 tokens) [tmp fix hard-coding the model response to `"I don't want to answer."`]
+- [x] [fix] Fix short responses behavior (less than 4 tokens) [fix based on `generation_config`, TODO: how the generation change w/ bigger models?]
+- [x] Add support for model's sharing (and backup) on 🤗 HuggingFace hub!
 - [ ] Add possibility of using a reward manager as a reward model, to have more control over the reward system.
 - [ ] Compatibility of ⚖️ ToxicityMeter with other datasets (possibly instructional).
 - [ ] Extend ⚖️ ToxicityMeter compatibility with 🤗 Accelerate.
