@@ -74,6 +74,7 @@ class RLModel:
             gradient_accumulation_steps = gradient_acc_steps,
             accelerator_kwargs = accelerator_kwargs,
         )
+        self.ppo_trainer = None
 
         
     def generate_dataset(
@@ -152,7 +153,7 @@ class RLModel:
             filter(lambda p: p.requires_grad, self.generator_manager.model.parameters()), lr = self.config.learning_rate
         )
 
-        ppo_trainer = PPOTrainer(
+        self.ppo_trainer = PPOTrainer(
             self.config, 
             self.generator_manager.model, 
             ref_model = None,   # let the PPO trainer deal with the reference model
@@ -171,7 +172,7 @@ class RLModel:
 
         # legacy:
         # model_loader = self.accelerator.prepare(model_loader)
-        model_loader = ppo_trainer.dataloader
+        model_loader = self.ppo_trainer.dataloader
 
         print(f'loader len: {len(model_loader)}')
         for n_batch, batch in tqdm(enumerate(model_loader)):
@@ -181,7 +182,7 @@ class RLModel:
             # get generation
             responses = []
             for prompt in batch['input_ids']:
-                response = ppo_trainer.generate(
+                response = self.ppo_trainer.generate(
                     prompt, 
                     generation_config = self.generator_manager.generation_config,
                 )
@@ -203,10 +204,10 @@ class RLModel:
             ]
             
             ### DEBUG pt.2
-            ### print statement to check the prompt, response pair of the current batch
-            for i, (pro, res) in enumerate(zip(batch['prompt'], batch['response'])):
-                print(f'Input n. {i}, \n\t --Prompt-len: {len(pro)}-> "{pro.rstrip()}"\n\t --Generation-len: {len(res)}-> "{res.rstrip()}"\n{"-"*20}\n')
-            ### END DEBUG pt.2
+            # ### print statement to check the prompt, response pair of the current batch
+            # for i, (pro, res) in enumerate(zip(batch['prompt'], batch['response'])):
+            #     print(f'Input n. {i}, \n\t --Prompt-len: {len(pro)}-> "{pro.rstrip()}"\n\t --Generation-len: {len(res)}-> "{res.rstrip()}"\n{"-"*20}\n')
+            # ### END DEBUG pt.2
 
             model_tox_set = ToxicityGeneratedSet(
                 prompts = batch['prompt'],
@@ -224,18 +225,25 @@ class RLModel:
             self.generator_manager.model.gradient_checkpointing_enable()
             self.generator_manager.model.pretrained_model.config.use_cache = False
 
-            stats = ppo_trainer.step(
+            stats = self.ppo_trainer.step(
                 queries = list(batch['input_ids']),     # get list of tensor, shape [sample, max_len]
                 responses = responses, 
                 scores = [torch.tensor(s) for s in result_tox['response_score']],
             )
-            ppo_trainer.log_stats(stats, batch, rewards = result_tox['response_score'])
+            self.ppo_trainer.log_stats(stats, batch, rewards = result_tox['response_score'])
             tot_stats.append(stats)
 
             # Save model every 100 batch
             if n_batch % 100 == 0:
-                if ppo_trainer.accelerator.is_main_process:
-                    ppo_trainer.save_pretrained(model_save_path)
+                if self.ppo_trainer.accelerator.is_main_process:
+                    self.ppo_trainer.save_pretrained(model_save_path)
             
-        return ppo_trainer, tot_stats
+        return tot_stats
 
+    def push_to_hub(self, repo_id):
+        assert self.ppo_trainer != None, 'You should train the model first using train_PPO function'
+        
+        # self.ppo_trainer.push_to_hub(repo_id, commit_message=commit_message)
+        self.generator_manager.model.push_to_hub(repo_id)
+        
+        print('https://huggingface.co/' + repo_id)

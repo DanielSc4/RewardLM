@@ -16,11 +16,11 @@ class CastOutputToFloat(nn.Sequential):
 
 
 class GenerativeModel:
-    def __init__(self, model_id: str, device: str = None, load_dtype: str = 'fp32', generation_config: GenerationConfig = None, accelerator_kwargs: dict = {},) -> None:
+    def __init__(self, model_id: str, load_from_peft: bool = False, device: str = None, load_dtype: str = 'fp32', generation_config: GenerationConfig = None, accelerator_kwargs: dict = {},) -> None:
         """Wrapper class for all the generative models from 🤗 HuggingFace
 
         Args:
-            model_id (str): model id or path from 🤗 Hugging Face
+            model_id (str): model id or path from 🤗 Hugging Face or id containing LoraConfig if load_from_peft = True
             device (str, optional): ['cpu', 'cuda', 'mps', None]. Defaults to None.
         """
 
@@ -48,27 +48,40 @@ class GenerativeModel:
             self.device = self.accelerator.device
 
 
-        
-        if load_dtype == '8-bit':
-            self.model = AutoModelForCausalLM.from_pretrained(
-                model_id,
-                device_map = 'auto',
-                load_in_8bit = True,
-            )
-        elif load_dtype == 'bf16':
-            self.model = AutoModelForCausalLM.from_pretrained(
-                model_id,
-                torch_dtype = torch.bfloat16,
-            ).to(self.device)
+        if load_from_peft:
+            config = LoraConfig.from_pretrained(self.model_id)
+            self.original_pretrained_model_id = config.base_model_name_or_path
+            self.__load_from_peft(config, load_dtype)
         else:
-            # load in standard mode: float32
-            self.model = AutoModelForCausalLM.from_pretrained(model_id).to(self.device)   
+            if load_dtype == '8-bit':
+                self.model = AutoModelForCausalLM.from_pretrained(
+                    model_id,
+                    device_map = 'auto',
+                    load_in_8bit = True,
+                )
+            elif load_dtype == 'bf16':
+                self.model = AutoModelForCausalLM.from_pretrained(
+                    model_id,
+                    torch_dtype = torch.bfloat16,
+                ).to(self.device)
+            else:
+                # load in standard mode: float32
+                self.model = AutoModelForCausalLM.from_pretrained(model_id).to(self.device)   
 
         # tokenizer
-        self.tokenizer = AutoTokenizer.from_pretrained(model_id)
+        if load_from_peft:
+            self.tokenizer = AutoTokenizer.from_pretrained(self.original_pretrained_model_id)
+        else:
+            self.tokenizer = AutoTokenizer.from_pretrained(model_id)
         self.tokenizer.padding_side = "left" 
         self.tokenizer.pad_token = self.tokenizer.eos_token
     
+    def __load_from_peft(self, config, load_dtype: str):
+        # model
+        original_pretrained = AutoModelForCausalLMWithValueHead.from_pretrained(self.original_pretrained_model_id)
+        self.model = get_peft_model(model = original_pretrained, peft_config=config)
+
+
     def print_trainable_parameters(self) -> None:
         """Prints the number of trainable parameters in the model
         """
