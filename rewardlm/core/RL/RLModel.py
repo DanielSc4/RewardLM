@@ -241,7 +241,7 @@ class RLModel:
         return tot_stats
 
     def push_generator_to_hub(self, repo_id: str):
-        """After training w/ PPO this function pushes the generator model to HuggingFace Hub to share/backup it.
+        """After training w/ PPO | FT this function pushes the generator model to HuggingFace Hub to share/backup it.
         Note that, if you are using LoRA adapters, only the model the adapters will be pushed (original models remain the pretrained)
 
         Args:

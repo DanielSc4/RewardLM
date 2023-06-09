@@ -201,4 +201,7 @@ class GenerativeModel:
         return output_model
 
 
+    def push_to_hub(self, repo_id: str):
+        self.model.push_to_hub(repo_id)
+        print('https://huggingface.co/' + repo_id)
     
