@@ -63,7 +63,7 @@ class RLModel:
 
         if optimized:
             self.generator_manager.apply_LoRA()
-            print(self.generator_manager.print_trainable_parameters())
+            self.generator_manager.print_trainable_parameters()
 
         self.config = PPOConfig(
             model_name = model_id,

@@ -1,3 +1,4 @@
+import torch
 from torch.utils.data import Dataset
 
 class PromptsDataset(Dataset):
@@ -51,16 +52,29 @@ class PromptDataset_CLM(Dataset):
             text)
         )
 
-        self.tokenized = list(map(
-            lambda samples: self.tokenizer(samples), 
-            adj_prompt,
-        ))
+        self.tokenized = self.tokenizer(
+            adj_prompt, 
+            return_tensors = 'pt', 
+            truncation = True, 
+            padding = True,
+        )
+
+        # self.tokenized = list(map(
+        #     lambda samples: self.tokenizer(
+        #         samples, 
+        #         return_tensors = 'pt', 
+        #         truncation=True, 
+        #         padding=True,
+        #     ), 
+        #     adj_prompt,
+        # ))
     
     def __len__(self,):
         return len(self.tokenized)
     
     def __getitem__(self, index):
-        return self.tokenized[index]
+        item = {key: torch.tensor(val[index]) for key, val in self.tokenized.items()}
+        return item
 
 
 

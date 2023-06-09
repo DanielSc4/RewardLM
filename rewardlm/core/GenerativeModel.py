@@ -119,7 +119,7 @@ class GenerativeModel:
     def fine_tune(
             self,
             torch_dataset: torch.utils.data.Dataset, 
-            optimized: bool = False,
+            optimized: bool = True,
             lr: float = 2e-4,
         ):
         """fine tune the model with the data provided
@@ -130,9 +130,6 @@ class GenerativeModel:
         
             reference notebook from huggingface: https://colab.research.google.com/drive/1jCkpikz0J2o20FBQmYmAGdiKmJGOMo-o?usp=sharing#scrollTo=MDqJWba-tpnv
         """
-        if optimized:
-            assert self.load_dtype == '8-bit', '8 bit mode required for PEFT (optimized)'
-
 
         # apply some post-processing on the 8-bit model to enable training
         # freeze all layers and cast the layer-norm (and the output) to float32 for stability
@@ -142,7 +139,7 @@ class GenerativeModel:
                 param.data = param.data.to(torch.float32)
 
 
-        self.model.config.use_cache = False                # silence the warnings. Please re-enable for inference!
+        self.model.config.use_cache = False                # silence the warnings. Re-enable for inference!
         self.model.gradient_checkpointing_enable()
         self.model.enable_input_require_grads()     # Enables the gradients for the input embeddings. This is useful for fine-tuning adapter weights while keeping the model weights fixed.
 
@@ -169,7 +166,7 @@ class GenerativeModel:
                 max_steps = 200,
                 optim = 'adamw_torch',
                 learning_rate = lr,
-                fp16 = True if optimized else False,
+                fp16 = True if torch.cuda.is_available() else False,
                 logging_steps = 1,
                 output_dir = './checkpoints/fine_tune/',
             ),
