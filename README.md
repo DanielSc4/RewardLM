@@ -2,6 +2,8 @@
 Reward a Language Model with pancakes 🥞
 
 ## `TODO`:
+- [ ] Add support for checkpointing and tracking [more info](https://huggingface.co/docs/accelerate/usage_guides/tracking).
+- [ ] Add support for dynamic batch size based on [Memory Utilities](https://huggingface.co/docs/accelerate/usage_guides/memory) from 🤗 HuggingFace.
 - [x] [fix] Fix short responses behavior (less than 4 tokens) [fix based on `generation_config`, TODO: how the generation change w/ bigger models?]
 - [x] Add support for model's sharing (and backup) on 🤗 HuggingFace hub!
 - [ ] Add possibility of using a reward manager as a reward model, to have more control over the reward system.
