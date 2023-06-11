@@ -2,6 +2,7 @@
 Reward a Language Model with pancakes 🥞
 
 ## `TODO`:
+- [ ] Catch & handle `ValueError: Responses are too short. Make sure they are at least 4 tokens long.` error skipping current batch that generates the anomaly.
 - [ ] Add support for checkpointing and tracking [more info](https://huggingface.co/docs/accelerate/usage_guides/tracking).
 - [ ] Add support for dynamic batch size based on [Memory Utilities](https://huggingface.co/docs/accelerate/usage_guides/memory) from 🤗 HuggingFace.
 - [x] [fix] Fix short responses behavior (less than 4 tokens) [fix based on `generation_config`, TODO: how the generation change w/ bigger models?]
