@@ -59,7 +59,7 @@ class GenerativeModel:
                     model_id,
                     # device_map = self.device,
                     load_in_8bit = True,
-                ).to(self.device)
+                )
             elif load_dtype == 'bf16':
                 self.model = AutoModelForCausalLM.from_pretrained(
                     model_id,
