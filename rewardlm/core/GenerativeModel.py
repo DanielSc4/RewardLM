@@ -70,9 +70,9 @@ class GenerativeModel:
 
         # tokenizer
         if load_from_peft:
-            self.tokenizer = AutoTokenizer.from_pretrained(self.original_pretrained_model_id)
+            self.tokenizer = AutoTokenizer.from_pretrained(self.original_pretrained_model_id, use_fast = False)
         else:
-            self.tokenizer = AutoTokenizer.from_pretrained(model_id)
+            self.tokenizer = AutoTokenizer.from_pretrained(model_id, use_fast = False)
         self.tokenizer.padding_side = "left" 
         self.tokenizer.pad_token = self.tokenizer.eos_token
     
