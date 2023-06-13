@@ -137,7 +137,8 @@ class GenerativeModel:
         for param in self.model.parameters():
             param.requires_grad = False     # freeze
             if param.ndim == 1 and optimized:
-                param.data = param.data.to(torch.float32)
+                # param.data = param.data.to(torch.float32)
+                pass
 
 
         self.model.config.use_cache = False                # silence the warnings. Re-enable for inference!
@@ -165,7 +166,7 @@ class GenerativeModel:
                 gradient_accumulation_steps = 4,
                 warmup_steps = 100,
                 max_steps = 200,
-                optim = 'adamw_torch',
+                # optim = 'adamw_torch',
                 learning_rate = lr,
                 fp16 = True if torch.cuda.is_available() else False,
                 auto_find_batch_size = True,
@@ -177,7 +178,8 @@ class GenerativeModel:
         )
         print(f'Trainer device: {trainer.accelerator.device}')
         
-        trainer.train()
+        with torch.autocast("cuda"):
+            trainer.train()
         self.model.config.use_cache = True         # re-enable for inference
     
     def inference_fine_tuned(self, tokenized_batch: dict, return_decoded: bool = False):
