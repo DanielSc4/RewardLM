@@ -26,6 +26,7 @@ class GenerativeModel:
 
         self.model_id = model_id
         self.accelerator = Accelerator(**accelerator_kwargs)
+        print(f'Selected device: {self.accelerator.device}')
 
         if generation_config is None:
             self.generation_config = GenerationConfig(
@@ -56,9 +57,9 @@ class GenerativeModel:
             if load_dtype == '8-bit':
                 self.model = AutoModelForCausalLM.from_pretrained(
                     model_id,
-                    device_map = 'auto',
+                    # device_map = self.device,
                     load_in_8bit = True,
-                )
+                ).to(self.device)
             elif load_dtype == 'bf16':
                 self.model = AutoModelForCausalLM.from_pretrained(
                     model_id,
@@ -167,11 +168,14 @@ class GenerativeModel:
                 optim = 'adamw_torch',
                 learning_rate = lr,
                 fp16 = True if torch.cuda.is_available() else False,
+                auto_find_batch_size = True,
+                use_mps_device=False,
                 logging_steps = 1,
                 output_dir = './checkpoints/fine_tune/',
             ),
             data_collator = transformers.DataCollatorForLanguageModeling(self.tokenizer, mlm = False)
         )
+        print(f'Trainer device: {trainer.accelerator.device}')
         
         trainer.train()
         self.model.config.use_cache = True         # re-enable for inference
