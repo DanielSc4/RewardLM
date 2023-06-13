@@ -224,19 +224,26 @@ class RLModel:
 
             self.generator_manager.model.gradient_checkpointing_enable()
             self.generator_manager.model.pretrained_model.config.use_cache = False
-
-            stats = self.ppo_trainer.step(
-                queries = list(batch['input_ids']),     # get list of tensor, shape [sample, max_len]
-                responses = responses, 
-                scores = [torch.tensor(s) for s in result_tox['response_score']],
-            )
-            self.ppo_trainer.log_stats(stats, batch, rewards = result_tox['response_score'])
+            
+            try:
+                stats = self.ppo_trainer.step(
+                    queries = list(batch['input_ids']),     # get list of tensor, shape [sample, max_len]
+                    responses = responses, 
+                    scores = [torch.tensor(s) for s in result_tox['response_score']],
+                )
+                self.ppo_trainer.log_stats(stats, batch, rewards = result_tox['response_score'])
+            
+            except ValueError as ve:
+                print(ve)
+                print(f'Skipping current batch [n: {n_batch}]')
+            
             tot_stats.append(stats)
 
-            # Save model every 100 batch
-            if n_batch % 100 == 0:
+            # Save model every 2 batch
+            if n_batch % 2 == 0:
                 if self.ppo_trainer.accelerator.is_main_process:
                     self.ppo_trainer.save_pretrained(model_save_path)
+                    print('PPO trainer checkpoint saved')
             
         return tot_stats
 
