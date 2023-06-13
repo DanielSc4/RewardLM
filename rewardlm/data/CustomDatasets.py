@@ -73,7 +73,7 @@ class PromptDataset_CLM(Dataset):
         return len(self.tokenized)
     
     def __getitem__(self, index):
-        item = {key: torch.tensor(val[index]) for key, val in self.tokenized.items()}
+        item = {key: torch.as_tensor(val[index]) for key, val in self.tokenized.items()}
         return item
 
 
