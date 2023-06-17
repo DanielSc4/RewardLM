@@ -26,7 +26,7 @@ class GenerativeModel:
 
         self.model_id = model_id
         self.accelerator = Accelerator(**accelerator_kwargs)
-        print(f'Selected device: {self.accelerator.device}')
+        print(f'Accelerator selected device: {self.accelerator.device}')
 
         if generation_config is None:
             self.generation_config = GenerationConfig(
