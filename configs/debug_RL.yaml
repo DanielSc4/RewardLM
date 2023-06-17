@@ -5,7 +5,15 @@ reward:
 
 generation:
   model_id: MBZUAI/LaMini-GPT-124M
+  # other model to use next for bigger trials
+  # model_id = 'MBZUAI/LaMini-GPT-124M'
+  # model_id = 'togethercomputer/RedPajama-INCITE-Chat-3B-v1'
+  # model_id = 'AlekseyKorshuk/vicuna-7b'
 
 PPO:
-  bs: 128     # batch size used for each optimization step
-  mini_bs: 4  # mini batch size (<= batch size) for each model forward pass 
+  bs: 4     # batch size used for each optimization step
+  mini_bs: 2  # mini batch size (<= batch size) for each model forward pass 
+
+data:
+  subset: yes   # Used for debug. If no, the following will be ignored
+  subset_size: 10

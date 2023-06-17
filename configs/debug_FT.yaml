@@ -1,0 +1,11 @@
+# Debug configuration for fine-tuning a model
+# (using small size models and small batchsize to compute faster)
+generation:
+  model_id: MBZUAI/LaMini-GPT-124M
+  # other model to use next for bigger trials
+  # model_id = 'facebook/opt-350m'
+  # model_id = 'MBZUAI/LaMini-GPT-774M'
+
+data:
+  subset: yes   # Used for debug. If no, the following will be ignored
+  subset_size: 10

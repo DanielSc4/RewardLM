@@ -235,7 +235,7 @@ class RLModel:
             
             except ValueError as ve:
                 print(ve)
-                print(f'Skipping current batch [n: {n_batch}]')
+                print(f'Skipping current batch [{n_batch}]')
             
             tot_stats.append(stats)
 
