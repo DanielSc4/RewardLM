@@ -57,6 +57,7 @@ class GenerativeModel:
             if load_dtype == '8-bit':
                 self.model = AutoModelForCausalLM.from_pretrained(
                     model_id,
+                    device_map="auto",
                     # device_map = self.device,
                     load_in_8bit = True,
                 )

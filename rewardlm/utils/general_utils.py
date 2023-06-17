@@ -1,4 +1,5 @@
 import torch
+import yaml
 
 def device_selector():
     """_summary_
@@ -21,3 +22,13 @@ def device_selector():
         device = 'cpu'
     return device
 
+
+def read_config(name: str = ''):
+    assert name != '', 'Pls use a valid config'
+    
+    path = '../config/'
+
+    with open(path + name, "r") as ymlfile:
+        cfg = yaml.load(ymlfile)
+    
+    return cfg
