@@ -23,12 +23,12 @@ def device_selector():
     return device
 
 
-def read_config(name: str = ''):
+def load_config(name: str = ''):
     assert name != '', 'Pls use a valid config'
     
-    path = '../config/'
+    path = './configs/'
 
-    with open(path + name, "r") as ymlfile:
-        cfg = yaml.load(ymlfile)
+    with open(path + name + '.yaml', "r") as ymlfile:
+        cfg = yaml.safe_load(ymlfile)
     
     return cfg
