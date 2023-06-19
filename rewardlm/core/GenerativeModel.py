@@ -123,6 +123,8 @@ class GenerativeModel:
             torch_dataset: torch.utils.data.Dataset, 
             optimized: bool = True,
             lr: float = 2e-4,
+            epochs: int = 3,
+            initial_bs: int = 32,
         ):
         """fine tune the model with the data provided
 
@@ -163,14 +165,14 @@ class GenerativeModel:
             model = self.model,
             train_dataset = torch_dataset,
             args = TrainingArguments(
-                per_device_train_batch_size = 4,
+                per_device_train_batch_size = initial_bs,       # initial batchsize set
                 gradient_accumulation_steps = 4,
-                warmup_steps = 100,
-                max_steps = 200,
+                # warmup_steps = 100,
+                num_train_epochs = epochs,
                 # optim = 'adamw_torch',
                 learning_rate = lr,
                 fp16 = True if torch.cuda.is_available() else False,
-                auto_find_batch_size = True,
+                auto_find_batch_size = True,            # lower batchsize exp to avoid CUDA out of memory
                 use_mps_device = True,
                 logging_steps = 1,
                 output_dir = './checkpoints/fine_tune/',
