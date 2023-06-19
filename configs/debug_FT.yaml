@@ -10,5 +10,5 @@ generation:
   # model_id = 'MBZUAI/LaMini-GPT-774M'
 
 data:
-  subset: no   # Used for debug. If no, the following will be ignored
+  subset: yes   # Used for debug. If no, the following will be ignored
   subset_size: 30
