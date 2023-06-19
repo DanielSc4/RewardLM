@@ -173,7 +173,7 @@ class GenerativeModel:
                 learning_rate = lr,
                 fp16 = True if torch.cuda.is_available() else False,
                 auto_find_batch_size = True,            # lower batchsize exp to avoid CUDA out of memory
-                use_mps_device = True,
+                use_mps_device = torch.backends.mps.is_available(),
                 logging_steps = 1,
                 output_dir = './checkpoints/fine_tune/',
             ),

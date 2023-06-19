@@ -12,3 +12,4 @@ trl
 huggingface-hub
 sentencepiece
 protobuf==3.20.*
+pynvml
