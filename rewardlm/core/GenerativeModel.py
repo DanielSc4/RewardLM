@@ -75,11 +75,17 @@ class GenerativeModel:
             self.tokenizer = AutoTokenizer.from_pretrained(self.original_pretrained_model_id, use_fast = False)
         else:
             self.tokenizer = AutoTokenizer.from_pretrained(model_id, use_fast = False)
-        self.tokenizer.padding_side = "left" 
-        self.tokenizer.pad_token = self.tokenizer.eos_token
+        self.tokenizer.padding_side = "left"        # Allow batched inference
+        
+        # TODO: check where is best to set pad_token id to 0 or pad_token = eos_token!
+        # Setting to 0 from alpaca-lora finetune script
+        self.tokenizer.pad_token_id = (
+            0  # unk. we want this to be different from the eos token
+        )
+        # self.tokenizer.pad_token = self.tokenizer.eos_token
     
     def __load_from_peft(self, config, load_dtype: str):
-        # model
+        # function to load a pretrained finetuned w/ peft model from huggingface, usign the original model and the specified configuration
         original_pretrained = AutoModelForCausalLMWithValueHead.from_pretrained(self.original_pretrained_model_id)
         self.model = get_peft_model(model = original_pretrained, peft_config=config)
 

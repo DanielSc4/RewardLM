@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from datasets import load_dataset
+from datasets import Dataset, load_dataset
 
 from torch.utils.data import DataLoader
 
@@ -115,3 +115,46 @@ def gen_loader(
     model_loader = DataLoader(model_set, batch_size = batch_size)
 
     return model_loader
+
+
+def get_dataset_CLM(data, tokenizer, context_length = 512, train_on_inputs: bool = False):
+    """Generate a HuggingFace Dataset tokenizing the given prompts
+
+    Args:
+        data (list[str]): list of data points (str)
+        tokenizer (_type_): Hugging Face tokenizer
+        context_length (int, optional): Max len of the context. Defaults to 512.
+        train_on_inputs (bool, optional): if True input promt contribute in loss . Defaults to False.
+
+    Returns:
+        datasets.Dataset: Dataset containing input_ids, attention_mask and labels for CLM task
+    """
+
+    raw_dataset = Dataset.from_list([{'text': text} for text in data])
+
+    def _tokenize(element, add_eos_token=True):
+        """tokenize a single element of the dataset
+        """
+        tokenized = tokenizer(
+            element["text"],
+            truncation=True,
+            max_length=context_length,
+            padding = False,
+            return_tensors = None,
+        )
+        if (
+            tokenized['input_ids'][-1] != tokenizer.eos_token_id        # encoded not ends with eos token
+            and len(tokenized["input_ids"]) < context_length            # input is shorter than context
+            and add_eos_token                                           # allowed to append eos token at the end
+        ):
+            tokenized['input_ids'].append(tokenizer.eos_token_id)
+            tokenized['attention_mask'].append(1)
+        
+        # CLM task requires labels == input_ids (next token pred.)
+        tokenized['labels'] = tokenized['input_ids'].copy()
+        
+        return tokenized
+    
+    tokenized_datasets = raw_dataset.map(_tokenize)
+
+    return tokenized_datasets
