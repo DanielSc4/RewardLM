@@ -126,41 +126,41 @@ class GenerativeModel:
 
     def fine_tune(
             self,
-            torch_dataset: torch.utils.data.Dataset, 
+            dataset: torch.utils.data.Dataset, 
             optimized: bool = True,
-            lr: float = 2e-4,
+            lr: float = 3e-4,
             epochs: int = 3,
             initial_bs: int = 32,
         ):
         """fine tune the model with the data provided
 
         Args:
-            torch_dataset (torch.utils.data.Dataset): dataset containing the training data (torch Dataset, already tokenized)
+            dataset (torch.utils.data.Dataset): dataset containing the training data (torch Dataset, already tokenized)
             optimized (bool, optional): True for 8-bit and LoRA optimization (PEFT, Perforcance-efficient fine-tuning). Defaults to False.
         
             reference notebook from huggingface: https://colab.research.google.com/drive/1jCkpikz0J2o20FBQmYmAGdiKmJGOMo-o?usp=sharing#scrollTo=MDqJWba-tpnv
         """
 
-        # apply some post-processing on the 8-bit model to enable training
-        # freeze all layers and cast the layer-norm (and the output) to float32 for stability
-        for param in self.model.parameters():
-            param.requires_grad = False     # freeze
-            if param.ndim == 1 and optimized:
-                # param.data = param.data.to(torch.float32)
-                pass
+        # # apply some post-processing on the 8-bit model to enable training
+        # # freeze all layers and cast the layer-norm (and the output) to float32 for stability
+        # # TODO: check the following code!
+        # for param in self.model.parameters():
+        #     param.requires_grad = False     # freeze
+        #     if param.ndim == 1 and optimized:
+        #         # param.data = param.data.to(torch.float32)
+        #         pass
 
 
-        self.model.config.use_cache = False                # silence the warnings. Re-enable for inference!
-        self.model.gradient_checkpointing_enable()
-        self.model.enable_input_require_grads()     # Enables the gradients for the input embeddings. This is useful for fine-tuning adapter weights while keeping the model weights fixed.
+        # self.model.config.use_cache = False                # silence the warnings. Re-enable for inference!
+        # self.model.gradient_checkpointing_enable()
+        # self.model.enable_input_require_grads()     # Enables the gradients for the input embeddings. This is useful for fine-tuning adapter weights while keeping the model weights fixed.
 
-        
-        # cast final tensor logits to torch.float32
-        setattr(
-            self.model,
-            list(self.model.named_children())[-1][0],    # name of the attribute
-            CastOutputToFloat(getattr(self.model, list(self.model.named_children())[-1][0]))
-        )
+        # # cast final tensor logits to torch.float32
+        # setattr(
+        #     self.model,
+        #     list(self.model.named_children())[-1][0],    # name of the attribute
+        #     CastOutputToFloat(getattr(self.model, list(self.model.named_children())[-1][0]))
+        # )
 
         if optimized:
             self.apply_LoRA()
@@ -169,23 +169,33 @@ class GenerativeModel:
         ## Training
         trainer = Trainer(
             model = self.model,
-            train_dataset = torch_dataset,
+            train_dataset = dataset,
             args = TrainingArguments(
                 per_device_train_batch_size = initial_bs,       # initial batchsize set
-                # gradient_accumulation_steps = 4,              # comment out for testing
-                # warmup_steps = 100,
+                gradient_accumulation_steps = 4,                # comment out for testing (gradient_acc_steps * initial_bs = total_batchsize)
+                warmup_steps = 100,
                 num_train_epochs = epochs,
-                # optim = 'adamw_torch',
                 learning_rate = lr,
                 fp16 = True if torch.cuda.is_available() else False,
+                optim="adamw_torch",
+                evaluation_strategy='no',
+                save_strategy="steps",
+                save_steps=200,
+
                 auto_find_batch_size = True,            # lower batchsize exp to avoid CUDA out of memory
                 use_mps_device = torch.backends.mps.is_available(),
                 logging_strategy="steps",
-                logging_steps=5,
+                logging_steps=10,
                 output_dir = './checkpoints/fine_tune/',
                 report_to='wandb',
             ),
-            data_collator = transformers.DataCollatorForLanguageModeling(self.tokenizer, mlm = False)
+            data_collator = transformers.DataCollatorForSeq2Seq(
+                self.tokenizer, 
+                # mlm = False, 
+                pad_to_multiple_of = 8,
+                return_tensors='pt', 
+                padding = True,
+            )
         )
         print(f'Trainer device: {trainer.accelerator.device}')
         

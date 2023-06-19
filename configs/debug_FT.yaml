@@ -2,7 +2,7 @@
 # (using small size models and small batchsize to compute faster)
 generation:
   model_id: MBZUAI/LaMini-GPT-124M
-  lr: 0.0002
+  lr: 0.0003
   epochs: 4
   initial_bs: 32
   # other model to use next for bigger trials
