@@ -166,7 +166,7 @@ class GenerativeModel:
             train_dataset = torch_dataset,
             args = TrainingArguments(
                 per_device_train_batch_size = initial_bs,       # initial batchsize set
-                gradient_accumulation_steps = 4,
+                # gradient_accumulation_steps = 4,              # comment out for testing
                 # warmup_steps = 100,
                 num_train_epochs = epochs,
                 # optim = 'adamw_torch',
