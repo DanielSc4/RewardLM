@@ -176,6 +176,7 @@ class GenerativeModel:
                 use_mps_device = torch.backends.mps.is_available(),
                 logging_steps = 1,
                 output_dir = './checkpoints/fine_tune/',
+                report_to='wandb',
             ),
             data_collator = transformers.DataCollatorForLanguageModeling(self.tokenizer, mlm = False)
         )
