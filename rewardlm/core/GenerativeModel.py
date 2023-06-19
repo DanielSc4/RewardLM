@@ -57,7 +57,7 @@ class GenerativeModel:
             if load_dtype == '8-bit':
                 self.model = AutoModelForCausalLM.from_pretrained(
                     model_id,
-                    device_map="auto",
+                    device_map= "auto" if torch.cuda.is_available() else 'cpu',
                     # device_map = self.device,
                     load_in_8bit = True,
                 )
@@ -171,7 +171,7 @@ class GenerativeModel:
                 learning_rate = lr,
                 fp16 = True if torch.cuda.is_available() else False,
                 auto_find_batch_size = True,
-                use_mps_device = False,
+                use_mps_device = True,
                 logging_steps = 1,
                 output_dir = './checkpoints/fine_tune/',
             ),

@@ -1,5 +1,6 @@
 import torch
 import yaml
+from pynvml import *
 
 def device_selector():
     """_summary_
@@ -32,3 +33,19 @@ def load_config(name: str = ''):
         cfg = yaml.safe_load(ymlfile)
     
     return cfg
+
+
+def print_gpu_utilization():
+    if torch.cuda.is_available():
+        nvmlInit()
+        handle = nvmlDeviceGetHandleByIndex(0)
+        info = nvmlDeviceGetMemoryInfo(handle)
+        print(f"GPU memory occupied: {info.used//1024**2} MB.")
+    else:
+        print('GPU not found')
+
+
+def print_summary(result):
+    print(f"Time: {result.metrics['train_runtime']:.2f}")
+    print(f"Samples/second: {result.metrics['train_samples_per_second']:.2f}")
+    print_gpu_utilization()

@@ -25,6 +25,7 @@ ipywidgets = "^8.0.6"
 jupyter = "^1.0.0"
 huggingface-hub = "^0.14.1"
 sentencepiece = "^0.1.99"
+pynvml = "^11.5.0"
 
 
 [build-system]
