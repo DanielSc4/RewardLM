@@ -172,7 +172,7 @@ class GenerativeModel:
             train_dataset = dataset,
             args = TrainingArguments(
                 per_device_train_batch_size = initial_bs,       # initial batchsize set
-                gradient_accumulation_steps = 4,                # comment out for testing (gradient_acc_steps * initial_bs = total_batchsize)
+                gradient_accumulation_steps = 4,                # (gradient_acc_steps * initial_bs = total_batchsize)
                 warmup_steps = 100,
                 num_train_epochs = epochs,
                 learning_rate = lr,
@@ -199,8 +199,8 @@ class GenerativeModel:
         )
         print(f'Trainer device: {trainer.accelerator.device}')
         
-        with torch.autocast("cuda"):
-            trainer.train()
+        # with torch.autocast("cuda"):
+        trainer.train()
         self.model.config.use_cache = True         # re-enable for inference
     
     def inference_fine_tuned(self, tokenized_batch: dict, return_decoded: bool = False):
