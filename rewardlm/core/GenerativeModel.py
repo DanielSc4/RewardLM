@@ -146,26 +146,26 @@ class GenerativeModel:
             reference notebook from huggingface: https://colab.research.google.com/drive/1jCkpikz0J2o20FBQmYmAGdiKmJGOMo-o?usp=sharing#scrollTo=MDqJWba-tpnv
         """
 
-        # # apply some post-processing on the 8-bit model to enable training
-        # # freeze all layers and cast the layer-norm (and the output) to float32 for stability
-        # # TODO: check the following code!
-        # for param in self.model.parameters():
-        #     param.requires_grad = False     # freeze
-        #     if param.ndim == 1 and optimized:
-        #         # param.data = param.data.to(torch.float32)
-        #         pass
+        # apply some post-processing on the 8-bit model to enable training
+        # freeze all layers and cast the layer-norm (and the output) to float32 for stability
+        # TODO: check the following code!
+        for param in self.model.parameters():
+            param.requires_grad = False     # freeze
+            if param.ndim == 1 and optimized:
+                # param.data = param.data.to(torch.float32)
+                pass
 
 
-        # self.model.config.use_cache = False                # silence the warnings. Re-enable for inference!
-        # self.model.gradient_checkpointing_enable()
-        # self.model.enable_input_require_grads()     # Enables the gradients for the input embeddings. This is useful for fine-tuning adapter weights while keeping the model weights fixed.
+        self.model.config.use_cache = False                # silence the warnings. Re-enable for inference!
+        self.model.gradient_checkpointing_enable()
+        self.model.enable_input_require_grads()     # Enables the gradients for the input embeddings. This is useful for fine-tuning adapter weights while keeping the model weights fixed.
 
-        # # cast final tensor logits to torch.float32
-        # setattr(
-        #     self.model,
-        #     list(self.model.named_children())[-1][0],    # name of the attribute
-        #     CastOutputToFloat(getattr(self.model, list(self.model.named_children())[-1][0]))
-        # )
+        # cast final tensor logits to torch.float32
+        setattr(
+            self.model,
+            list(self.model.named_children())[-1][0],    # name of the attribute
+            CastOutputToFloat(getattr(self.model, list(self.model.named_children())[-1][0]))
+        )
 
         if optimized:
             self.apply_LoRA()
@@ -177,7 +177,7 @@ class GenerativeModel:
             train_dataset = dataset,
             args = TrainingArguments(
                 per_device_train_batch_size = initial_bs,       # initial batchsize set
-                gradient_accumulation_steps = 1,                # (gradient_acc_steps * initial_bs = total_batchsize)
+                gradient_accumulation_steps = 4,                # (gradient_acc_steps * initial_bs = total_batchsize)
                 warmup_steps = 100,
                 num_train_epochs = epochs,
                 learning_rate = lr,
