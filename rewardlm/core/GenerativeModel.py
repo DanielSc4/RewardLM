@@ -61,6 +61,7 @@ class GenerativeModel:
                     model_id,
                     device_map= "auto" if torch.cuda.is_available() else 'cpu',
                     # device_map = self.device,
+                    torch_dtype = torch.float16,
                     load_in_8bit = True,
                 )
             elif load_dtype == 'bf16':
