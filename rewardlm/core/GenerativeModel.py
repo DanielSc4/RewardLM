@@ -76,7 +76,7 @@ class GenerativeModel:
         if load_from_peft:
             self.tokenizer = AutoTokenizer.from_pretrained(self.original_pretrained_model_id, use_fast = False)
         else:
-            self.tokenizer = AutoTokenizer.from_pretrained(model_id, use_fast = False)
+            self.tokenizer = AutoTokenizer.from_pretrained(model_id)
         self.tokenizer.padding_side = "left"        # Allow batched inference
         
         # TODO: check where is best to set pad_token id to 0 or pad_token = eos_token!
