@@ -172,7 +172,7 @@ class GenerativeModel:
             train_dataset = dataset,
             args = TrainingArguments(
                 per_device_train_batch_size = initial_bs,       # initial batchsize set
-                gradient_accumulation_steps = 4,                # (gradient_acc_steps * initial_bs = total_batchsize)
+                gradient_accumulation_steps = 1,                # (gradient_acc_steps * initial_bs = total_batchsize)
                 warmup_steps = 100,
                 num_train_epochs = epochs,
                 learning_rate = lr,
