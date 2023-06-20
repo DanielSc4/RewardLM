@@ -131,6 +131,7 @@ class GenerativeModel:
             lr: float = 3e-4,
             epochs: int = 3,
             initial_bs: int = 32,
+            run_name: str = 'random_name',
         ):
         """fine tune the model with the data provided
 
@@ -181,13 +182,13 @@ class GenerativeModel:
                 evaluation_strategy='no',
                 save_strategy="steps",
                 save_steps=200,
-
                 auto_find_batch_size = True,            # lower batchsize exp to avoid CUDA out of memory
                 use_mps_device = torch.backends.mps.is_available(),
                 logging_strategy="steps",
                 logging_steps=10,
                 output_dir = './checkpoints/fine_tune/',
                 report_to='wandb',
+                run_name = run_name,
             ),
             data_collator = transformers.DataCollatorForSeq2Seq(
                 self.tokenizer, 
