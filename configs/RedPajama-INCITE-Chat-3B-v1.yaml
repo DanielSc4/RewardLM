@@ -1,0 +1,11 @@
+# togethercomputer/RedPajama-INCITE-Chat-3B-v1
+
+generation:
+  model_id: togethercomputer/RedPajama-INCITE-Chat-3B-v1
+  lr: 0.0003
+  epochs: 3
+  initial_bs: 32
+
+data:
+  subset: no   # Used for debug. If no, the following will be ignored
+  subset_size: 30
