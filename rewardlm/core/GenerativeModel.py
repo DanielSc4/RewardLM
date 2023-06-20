@@ -30,13 +30,14 @@ class GenerativeModel:
 
         if generation_config is None:
             self.generation_config = GenerationConfig(
-                max_new_tokens = 25,
+                max_new_tokens = 256,
                 min_new_tokens = 4,
-                num_beams = 5,
+                num_beams = 4,
                 early_stopping = True,
-                pad_token_id = 0,       # crashes while using batchsize > 1 only on mps device if not set
+                # pad_token_id = 0,       # crashes while using batchsize > 1 only on mps device if not set
                 temperature = 0.8,
-                top_p = .8,
+                top_p = .75,
+                top_k = 40
                 # diversity_penalty = .1, # should use num_beam_groups > 1
             )
         else:
@@ -52,6 +53,7 @@ class GenerativeModel:
         if load_from_peft:
             config = LoraConfig.from_pretrained(self.model_id)
             self.original_pretrained_model_id = config.base_model_name_or_path
+            print(f'Obtaining original model: {self.original_pretrained_model_id}')
             self.__load_from_peft(config, load_dtype)
         else:
             if load_dtype == '8-bit':
@@ -83,6 +85,7 @@ class GenerativeModel:
             0  # unk. we want this to be different from the eos token
         )
         # self.tokenizer.pad_token = self.tokenizer.eos_token
+
     
     def __load_from_peft(self, config, load_dtype: str):
         # function to load a pretrained finetuned w/ peft model from huggingface, usign the original model and the specified configuration
@@ -214,17 +217,15 @@ class GenerativeModel:
         Returns:
             model_output: raw output of the model (to be decoded by the tokenizer) or str if `return_decoded == True`
         """
+        # if self.optimized:
+        #     with torch.cuda.amp.autocast():
+        #         output_model = self.model.generate(**tokenized_batch, generation_config = self.generation_config)
+        # else:
+        with torch.no_grad():
+            output_model = self.model.generate(**tokenized_batch, generation_config = self.generation_config)
 
-
-        if self.optimized:
-            with torch.cuda.amp.autocast():
-                output_model = self.model.generate(**tokenized_batch, generation_config = self.generation_config)
-        else:
-            with torch.no_grad():
-                output_model = self.model.generate(**tokenized_batch, generation_config = self.generation_config)
-    
         if return_decoded:
-            self.tokenizer.decode(output_model[0], skip_special_tokens = True)
+            output_model = self.tokenizer.decode(output_model[0], skip_special_tokens = True)
         
         return output_model
 
