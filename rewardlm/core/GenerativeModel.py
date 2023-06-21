@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import transformers
+import datasets
 from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig, Trainer, TrainingArguments
 from accelerate import Accelerator
 
@@ -134,7 +135,8 @@ class GenerativeModel:
 
     def fine_tune(
             self,
-            dataset: torch.utils.data.Dataset, 
+            dataset: datasets.Dataset, 
+            val_set_per: float = .0,
             optimized: bool = True,
             lr: float = 3e-4,
             epochs: int = 3,
@@ -145,6 +147,7 @@ class GenerativeModel:
 
         Args:
             dataset (torch.utils.data.Dataset): dataset containing the training data (torch Dataset, already tokenized)
+            val_set_per (float, optional): percentage (%) of the dataset used for evaluation. Defaults to 0 (%)
             optimized (bool, optional): True for 8-bit and LoRA optimization (PEFT, Perforcance-efficient fine-tuning). Defaults to False.
         
             reference notebook from huggingface: https://colab.research.google.com/drive/1jCkpikz0J2o20FBQmYmAGdiKmJGOMo-o?usp=sharing#scrollTo=MDqJWba-tpnv
@@ -178,10 +181,24 @@ class GenerativeModel:
             self.apply_LoRA(prepare = False)
         self.print_trainable_parameters()
 
+        # spliting dataset if eval
+        if val_set_per > 0:
+            assert val_set_per < 1, f'val_set_per should be less than 1 ([0 - 99]%), {val_set_per} given'
+
+            train_eval_d = dataset.train_test_split(
+                test_size = int(len(dataset) * val_set_per), shuffle=True, seed=42,
+            )
+            train_dataset, val_dataset = train_eval_d['train'], train_eval_d['test']
+
+        else:
+            train_dataset = dataset
+            val_dataset = None
+
         ## Training
         trainer = Trainer(
             model = self.model,
-            train_dataset = dataset,
+            train_dataset = train_dataset,
+            eval_dataset = val_dataset, 
             args = TrainingArguments(
                 per_device_train_batch_size = initial_bs,       # initial batchsize set
                 gradient_accumulation_steps = 2,                # (gradient_acc_steps * initial_bs = total_batchsize)   # not working w/ > 1
@@ -190,13 +207,15 @@ class GenerativeModel:
                 learning_rate = lr,
                 fp16 = True if torch.cuda.is_available() else False,
                 optim="adamw_torch",
-                evaluation_strategy='no',
+                evaluation_strategy="steps" if val_set_per > 0 else "no",
+                eval_steps=200 if val_set_per > 0 else None,    # perform evaluation every _ step 
                 save_strategy="steps",
                 save_steps=200,
                 auto_find_batch_size = True,            # lower batchsize exp to avoid CUDA out of memory
                 use_mps_device = torch.backends.mps.is_available(),
                 logging_strategy="steps",
                 logging_steps=10,
+                save_total_limit = 4,       # max number of checkpoints saved (delete the older one)
                 output_dir = './checkpoints/fine_tune/',
                 report_to='wandb',
                 run_name = run_name,
@@ -229,6 +248,10 @@ class GenerativeModel:
         #     with torch.cuda.amp.autocast():
         #         output_model = self.model.generate(**tokenized_batch, generation_config = self.generation_config)
         # else:
+        for ele in tokenized_batch:
+            tokenized_batch[ele] = tokenized_batch[ele].to(self.accelerator.device)
+
+        self.model.eval()
         with torch.no_grad():
             output_model = self.model.generate(**tokenized_batch, generation_config = self.generation_config)
 
