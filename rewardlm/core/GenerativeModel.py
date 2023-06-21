@@ -250,6 +250,7 @@ class GenerativeModel:
         # else:
         for ele in tokenized_batch:
             tokenized_batch[ele] = tokenized_batch[ele].to(self.accelerator.device)
+        self.model.to(self.accelerator.device)
 
         self.model.eval()
         with torch.no_grad():
