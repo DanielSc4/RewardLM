@@ -8,6 +8,9 @@ generation:
   # other model to use next for bigger trials
   # model_id = 'facebook/opt-350m'
   # model_id = 'MBZUAI/LaMini-GPT-774M'
+  custom_prompt:
+    user_name: 'User:'
+    bot_name: 'Assistant:'
 
 data:
   subset: yes   # Used for debug. If no, the following will be ignored

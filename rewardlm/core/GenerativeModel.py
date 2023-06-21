@@ -60,7 +60,7 @@ class GenerativeModel:
             if load_dtype == '8-bit':
                 self.model = AutoModelForCausalLM.from_pretrained(
                     model_id,
-                    device_map= "auto" if torch.cuda.is_available() else 'cpu',
+                    device_map="auto" if torch.cuda.is_available() else 'cpu',
                     # device_map = self.device,
                     torch_dtype = torch.float16,
                     load_in_8bit = True,

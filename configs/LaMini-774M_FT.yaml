@@ -6,6 +6,10 @@ generation:
   initial_bs: 32
   # other model to use next for bigger trials
   # model_id = 'facebook/opt-350m'
+  custom_prompt:
+    user_name: 'User:'
+    bot_name: 'Assistant:'
+
 
 data:
   subset: no   # Used for debug. If no, the following will be ignored

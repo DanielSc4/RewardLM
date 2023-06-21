@@ -28,7 +28,12 @@ def download_DIALOCONAN():
     return pd.read_csv(CSV_URL)
 
 
-def get_DIALOCONAN_prepro(return_text_only = True, delete_last_assistant_response = False):
+def get_DIALOCONAN_prepro(
+        return_text_only = True, 
+        delete_last_assistant_response = False,
+        user_name: str = 'User:',
+        bot_name: str = 'Assistant:',
+    ):
     """Download DIALOCONAN dataset and adapt it to fine-tuning process
 
     Args:
@@ -51,8 +56,8 @@ def get_DIALOCONAN_prepro(return_text_only = True, delete_last_assistant_respons
 
         old_pair = ''
         for i, (ele1, ele2) in enumerate(_pairwise(clean_data)):
-            new_df[idx][i] = old_pair + f'User: {ele1}.\nAssistant: {ele2 if not delete_last_assistant_response else ""}'
-            old_pair += f'User: {ele1}.\nAssistant: {ele2}\n'
+            new_df[idx][i] = old_pair + f'{user_name} {ele1}.\n{bot_name} {ele2 if not delete_last_assistant_response else ""}'
+            old_pair += f'{user_name} {ele1}.\n{bot_name} {ele2}\n'
 
     if return_text_only:
         all_text = []
@@ -117,7 +122,7 @@ def gen_loader(
     return model_loader
 
 
-def get_dataset_CLM(data, tokenizer, context_length = 512, train_on_inputs: bool = False):
+def get_dataset_CLM(data, tokenizer, context_length = 512, custom_prompt = '{prompt}', train_on_inputs: bool = False):
     """Generate a HuggingFace Dataset tokenizing the given prompts
 
     Args:
@@ -129,6 +134,7 @@ def get_dataset_CLM(data, tokenizer, context_length = 512, train_on_inputs: bool
     Returns:
         datasets.Dataset: Dataset containing input_ids, attention_mask and labels for CLM task
     """
+    assert '{prompt}' in custom_prompt, 'custom_prompt must contain \'{prompt}\' ' + f'{custom_prompt} given.'
 
     raw_dataset = Dataset.from_list([{'text': text} for text in data])
 
