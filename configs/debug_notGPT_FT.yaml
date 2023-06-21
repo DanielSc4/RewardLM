@@ -5,12 +5,22 @@ generation:
   lr: 0.0005
   epochs: 3
   initial_bs: 32
+  dtype: 8-bit    # for toxicity meter
   # other model to use next for bigger trials
   # model_id = 'facebook/opt-350m'
   # model_id = 'MBZUAI/LaMini-GPT-774M'
   custom_prompt:
     user_name: 'User:'
     bot_name: 'Assistant:'
+  # temp generation config: TODO: find the best one
+  generation_config:
+    max_new_tokens: 256
+    min_new_tokens: 4
+    num_beams: 4
+    early_stopping: yes
+    temperature: 0.8
+    top_p: 0.75
+    top_k: 40
 
 data:
   subset: no   # Used for debug. If no, the following will be ignored

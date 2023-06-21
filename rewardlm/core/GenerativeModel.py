@@ -250,8 +250,12 @@ class GenerativeModel:
         # else:
         for ele in tokenized_batch:
             tokenized_batch[ele] = tokenized_batch[ele].to(self.accelerator.device)
-        self.model.to(self.accelerator.device)
-
+        
+        if not hasattr(self.model.config, 'quantization_config'):
+            # not loaded in 4 or 8 bit mode, else leave model as is
+            self.model.to(self.accelerator.device)
+            # if not self.model.config.to_dict()['quantization_config']['load_in_8bit']:
+            
         self.model.eval()
         with torch.no_grad():
             output_model = self.model.generate(**tokenized_batch, generation_config = self.generation_config)

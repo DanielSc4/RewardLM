@@ -5,6 +5,7 @@ reward:
 
 generation:
   model_id: MBZUAI/LaMini-GPT-124M
+  dtype: 8-bit    # for toxicity meter
   # other model to use next for bigger trials
   # model_id = 'MBZUAI/LaMini-GPT-124M'
   # model_id = 'togethercomputer/RedPajama-INCITE-Chat-3B-v1'
