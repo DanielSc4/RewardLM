@@ -104,62 +104,50 @@ generator_manager.fine_tune(
 
 ### **⚖️ ToxicityMeter**
 
-Toxicity meter allows measuring the toxicity of generative LM based on the output of a classifier ([RoBERTa for hate speech](https://huggingface.co/facebook/roberta-hate-speech-dynabench-r4-target))
+Toxicity meter allows measuring the toxicity of generative LM based on the output of a classifier ([RoBERTa for hate speech](https://huggingface.co/facebook/roberta-hate-speech-dynabench-r4-target) as default if no `RewardModel` is used)
 
 
 1. Choose `model_id`, `batchsize` and (opt) generation parameters:
 ```python
+import torch
 from transformers import GenerationConfig
+from rewardlm.core.GenerativeModel import GenerativeModel
 from rewardlm.ToxicityMeter import ToxicityMeter
-from rewardlm.utils.general_utils import device_selector
+from rewardlm.utils import load_config
 
-model_id = 'bigscience/bloomz-3b'
-reward_model_id = 'facebook/roberta-hate-speech-dynabench-r4-target'
-batchsize = 16
-generation_config = GenerationConfig(
-    max_new_tokens = 25,
-    num_beams = 5,
-    early_stopping = True,
-    # crashes while using batchsize > 1 on mps device if not set:
-    pad_token_id = 0,
-    temperature = 0.8,
-    top_p = .8,
-    # diversity_penalty = .1, # should use num_beam_groups > 1
-)
+config = load_config('RedPajama-INCITE-Chat-3B-v1')
 
-load_dtype = 'bf16' # can be ['8-bit', 'bf16', 'fp32']
-toxicity_meter = ToxicityMeter(
-    model_id = model_id,
-    load_dtype = load_dtype,
-    toxicity_model_id = reward_model_id,
-    device = device_selector(),
-    generation_config = generation_config,
+generator_manager = GenerativeModel(
+    config['generation']['model_id'],
+    load_dtype = '8-bit' if torch.cuda.is_available() else 'fp32',
+    # force the use of CPU on Apple Silicon devices (mps not supported):
+    generation_config=GenerationConfig(**config['generation']['generation_config'])
+    accelerator_kwargs = {
+        'cpu': False if torch.cuda.is_available() else True,
+    },
 )
 ```
 
-2. Customize your prompt from the original dataset and generate the `toxicity_df` dataset:
+2. Customize the prompt from the original dataset and generate the `toxicity_df` dataset:
 ```python
 from rewardlm.data.data_utils import get_real_toxicity_prompts
 
-custom_prompt = ('User: "{prompt}".\nAssistant: ')
-# custom prompts required by the original paper of RedPajama
-if model_id == 'togethercomputer/RedPajama-INCITE-Chat-3B-v1':
-    custom_prompt = ('<human>: "{prompt}"\n<bot>: ')
+toxicity_meter = ToxicityMeter(generator_manager)
+batchsize = 16
+custom_prompt = ('Statement: "{prompt}".\nResponse: ')
 
 toxicity_df = toxicity_meter.measure_toxicity(
     text_prompt = get_real_toxicity_prompts()['text'].to_list(),
     custom_prompt = custom_prompt, 
-    generation_config = generation_config,
     batch_size = batchsize,
 )
 ```
 
 3. Save the obtained results:
 ```python
-# save csv in tmp folder
 fld = './result analysis/tmp'
 toxicity_df.to_csv(
-    fld + f'/measured_tox_instruct_{model_id.split("/")[-1]}_{load_dtype}.csv'
+    fld + f'/measured_tox_instruct_{config["generation"]["model_id"].split("/")[-1]}_{load_dtype}.csv'
 )
 ```
 

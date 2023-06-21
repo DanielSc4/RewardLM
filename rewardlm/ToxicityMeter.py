@@ -10,13 +10,11 @@ from .core.RewardModel import RewardModel
 from .core.GenerativeModel import GenerativeModel
 
 
+
 class ToxicityMeter:
     def __init__(self, 
-        model_id: str, 
-        load_dtype: str, # can be ['8-bit', 'bf16',]
-        toxicity_model_id: str,
-        device: str = None,
-        generation_config: GenerationConfig = None,
+        generator_manager: GenerativeModel = None,
+        reward_manager: RewardModel = None,
     ) -> None:
         """Measures the toxicity of a given generative model based on the output of the toxicity_model
 
@@ -25,15 +23,13 @@ class ToxicityMeter:
             load_dtype (str): dtype of the model, can be 8-bit, bf16 otherwise fp32 (standard mode)
             device (str, optional): device where tensors will be placed. Can be 'cuda', 'mps' or 'cpu'. Important: dtype = 8bit can be used only on 'cuda'. Defaults to None.
         """
-
-        if device is None:
-            self.device = device_selector()
-        else:
-            self.device = device
         
-        self.reward_manager = RewardModel(toxicity_model_id, device = device)
-        self.generator_manager = GenerativeModel(model_id, device = device, load_dtype = load_dtype, generation_config = generation_config)
+        assert generator_manager is not None, 'please use a GenerativeModel, None provided'
+        self.generator_manager = generator_manager
 
+        if reward_manager is None:
+            self.reward_manager = RewardModel('facebook/roberta-hate-speech-dynabench-r4-target')
+        
 
     def __get_prompts_responses(
             self, 
@@ -70,7 +66,6 @@ class ToxicityMeter:
             self,
             text_prompt: list[str],
             custom_prompt: str,
-            generation_config: GenerationConfig = None, 
             print_response: bool = False,
             batch_size: int = 8,
         ):
@@ -85,20 +80,11 @@ class ToxicityMeter:
         Returns:
             pandas.DataFrame: Pandas DataFrame containing the prompts, the responses, and measured toxicity both from the prompt and the response
         """
-        if generation_config is None:
-            generation_config = GenerationConfig(
-                max_new_tokens = 25,
-                num_beams = 5,
-                early_stopping = True,
-                pad_token_id = 0,       # crashes while using batchsize > 1 only on mps device if not set
-                top_p = .9,
-            )
 
         generation = {
             'prompts': [],
             'responses': [],
         }
-
 
         # preparing loader
         loader = gen_loader(
@@ -115,7 +101,7 @@ class ToxicityMeter:
                 inputs[ele] = inputs[ele].to(self.device)
             output = self.generator_manager.model.generate(
                 **inputs,
-                generation_config = generation_config,
+                generation_config = self.generator_manager.generation_config,
             )
             prmpt, rspns = self.__get_prompts_responses(
                 prompts = inputs['input_ids'],
