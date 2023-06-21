@@ -2,7 +2,7 @@
 # (using small size models and small batchsize to compute faster)
 generation:
   model_id: EleutherAI/gpt-neo-125m
-  lr: 0.0003
+  lr: 0.0005
   epochs: 3
   initial_bs: 32
   # other model to use next for bigger trials
@@ -13,5 +13,5 @@ generation:
     bot_name: 'Assistant:'
 
 data:
-  subset: yes   # Used for debug. If no, the following will be ignored
+  subset: no   # Used for debug. If no, the following will be ignored
   subset_size: 30
