@@ -98,10 +98,11 @@ class ToxicityMeter:
         # generating text
         for inputs in tqdm(loader):
             for ele in inputs:
-                inputs[ele] = inputs[ele].to(self.device)
-            output = self.generator_manager.model.generate(
-                **inputs,
-                generation_config = self.generator_manager.generation_config,
+                inputs[ele] = inputs[ele].to(self.generator_manager.accelerator.device)
+            
+            output = self.generator_manager.inference_fine_tuned(
+                tokenized_batch = inputs,
+                return_decoded = False,
             )
             prmpt, rspns = self.__get_prompts_responses(
                 prompts = inputs['input_ids'],
