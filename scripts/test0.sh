@@ -11,26 +11,20 @@ module purge
 module load Python/3.9.6-GCCcore-11.2.0
 module load CUDA/11.7.0
 
+cd /home1/p313544
+source .venv/bin/activate
+
+echo "Python version: $(python --version)"
+
 # User's vars
 ## All scripts must be in the PATH_TO_PRJ/scripts directory!
 PATH_TO_PRJ=/home1/p313544/Documents/RewardLM
 SCRIPT_NAME=job_test.py
 
-# vars for execution
-## colors
-NC=$(tput sgr0)
-RED=$(tput setaf 1)
-GREEN=$(tput setaf 2)
-YELLOW=$(tput setaf 3)
-BLUE=$(tput setaf 4)
-
-
-cd /home1/p313544
-source .venv/bin/activate
-
-echo "${BLUE}Python version:${NC} $(python --version)"
-
-echo "${BLUE}Executing python script...${NC}"
+echo "Executing python script..."
 python $PATH_TO_PRJ/scripts/$SCRIPT_NAME
 
-echo "${GREEN}Done!${NC}"
+
+
+
+echo "Done!"
