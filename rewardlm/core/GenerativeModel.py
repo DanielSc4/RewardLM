@@ -65,14 +65,17 @@ class GenerativeModel:
                     torch_dtype = torch.float16,
                     load_in_8bit = True,
                 )
+                print(f'Model loaded in {load_dtype} mode')
             elif load_dtype == 'bf16':
                 self.model = AutoModelForCausalLM.from_pretrained(
                     model_id,
                     torch_dtype = torch.bfloat16,
                 ).to(self.device)
+                print(f'Model loaded in {load_dtype} mode')
             else:
                 # load in standard mode: float32
-                self.model = AutoModelForCausalLM.from_pretrained(model_id).to(self.device)   
+                self.model = AutoModelForCausalLM.from_pretrained(model_id).to(self.device)
+                print(f'Model loaded in fp32 (standard) mode')
 
         # tokenizer
         if load_from_peft:
