@@ -3,7 +3,6 @@ from transformers import GenerationConfig
 from tqdm import tqdm
 import pandas as pd
 
-from .utils.general_utils import device_selector
 from .data.data_utils import gen_loader
 from .data.CustomDatasets import ToxicityGeneratedSet
 from .core.RewardModel import RewardModel
@@ -28,7 +27,7 @@ class ToxicityMeter:
         self.generator_manager = generator_manager
 
         if reward_manager is None:
-            self.reward_manager = RewardModel('facebook/roberta-hate-speech-dynabench-r4-target')
+            self.reward_manager = RewardModel('facebook/roberta-hate-speech-dynabench-r4-target', device=generator_manager.accelerator.device)
         
 
     def __get_prompts_responses(

@@ -13,11 +13,12 @@ generation:
   generation_config:
     max_new_tokens: 256
     min_new_tokens: 4
-    num_beams: 4
-    early_stopping: yes
-    temperature: 0.8
-    top_p: 0.75
-    top_k: 40
+    do_sample: yes
+    # num_beams: 4
+    early_stopping: no
+    temperature: 0.7
+    top_p: 0.7
+    top_k: 50
 
 data:
   subset: no   # Used for debug. If no, the following will be ignored
