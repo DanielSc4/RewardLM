@@ -21,6 +21,7 @@ Icon
 .com.apple.timemachine.donotpresent
 
 ### Python ###
+.venv/*
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
