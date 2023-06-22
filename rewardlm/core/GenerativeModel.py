@@ -251,6 +251,11 @@ class GenerativeModel:
         #     with torch.cuda.amp.autocast():
         #         output_model = self.model.generate(**tokenized_batch, generation_config = self.generation_config)
         # else:
+
+        # solves error w/ missing pad_token
+        if self.generation_config.pad_token_id is None:
+            self.generation_config.pad_token_id = self.tokenizer.pad_token_id
+
         for ele in tokenized_batch:
             tokenized_batch[ele] = tokenized_batch[ele].to(self.accelerator.device)
         
@@ -265,7 +270,7 @@ class GenerativeModel:
 
         if return_decoded:
             output_model = self.tokenizer.decode(output_model[0], skip_special_tokens = True)
-        
+
         return output_model
 
 
