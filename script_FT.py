@@ -7,6 +7,11 @@ from rewardlm.core.GenerativeModel import GenerativeModel
 from rewardlm.utils import load_config
 from huggingface_hub import login
 
+import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ['BITSANDBYTES_NOWELCOME'] = '1'
+
+
 token = load_config(path = './', name = 'credentials')['huggingface_hub']
 login(token = token)
 

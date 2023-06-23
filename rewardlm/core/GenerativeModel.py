@@ -163,7 +163,7 @@ class GenerativeModel:
             for param in self.model.parameters():
                 param.requires_grad = False     # freeze all parameters
                 if param.ndim == 1 and optimized:
-                    param.data = param.data.to(torch.float16)       # ex float 32
+                    param.data = param.data.to(torch.float32)       # ex float 32
                     pass
 
 
@@ -179,7 +179,7 @@ class GenerativeModel:
             )
 
         if optimized:
-            self.apply_LoRA(prepare = False)
+            self.apply_LoRA(prepare = prepare)
         self.print_trainable_parameters()
 
         # spliting dataset if eval
@@ -213,7 +213,7 @@ class GenerativeModel:
                 save_strategy="steps",
                 save_steps=200,
                 auto_find_batch_size = True,            # lower batchsize exp to avoid CUDA out of memory
-                use_mps_device = torch.backends.mps.is_available(),
+                use_mps_device = False,                 # torch.backends.mps.is_available(),    # NOT working even if False!
                 logging_strategy="steps",
                 logging_steps=10,
                 save_total_limit = 4,       # max number of checkpoints saved (delete the older one)
@@ -229,7 +229,10 @@ class GenerativeModel:
                 padding = True,
             )
         )
+        print(trainer.accelerator)
+        print(type(trainer.accelerator))
         print(f'Trainer device: {trainer.accelerator.device}')
+        print(f'Trainer args device: {trainer.args.device}')
         
         # with torch.autocast("cuda"):
         trainer.train()
