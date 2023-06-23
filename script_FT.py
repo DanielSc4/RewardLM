@@ -5,8 +5,12 @@ from transformers import GenerationConfig
 from rewardlm.data.data_utils import get_DIALOCONAN_prepro, get_dataset_CLM
 from rewardlm.core.GenerativeModel import GenerativeModel
 from rewardlm.utils import load_config
+from huggingface_hub import login
 
-config = load_config('debug_FT')
+token = load_config(path = './', name = 'credentials')['huggingface_hub']
+login(token = token)
+
+config = load_config(name = 'debug_FT')
 repo_id = 'DanielSc4/' + config['generation']['model_id'].split('/')[1] + '-FT-LoRA-test1'
 
 generator_manager = GenerativeModel(

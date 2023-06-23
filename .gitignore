@@ -84,3 +84,4 @@ tests/wandb/*
 
 # all files named __old*
 **/_old*
+credentials.yaml

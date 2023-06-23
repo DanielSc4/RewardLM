@@ -8,8 +8,6 @@ from accelerate import Accelerator
 from peft import LoraConfig, get_peft_model, prepare_model_for_int8_training
 from trl import AutoModelForCausalLMWithValueHead
 
-from ..utils.general_utils import device_selector
-
 
 class CastOutputToFloat(nn.Sequential):
     def forward(self, x): 

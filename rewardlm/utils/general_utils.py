@@ -24,10 +24,8 @@ def device_selector():
     return device
 
 
-def load_config(name: str = ''):
-    assert name != '', 'Pls use a valid config'
-    
-    path = './configs/'
+def load_config(path: str = './configs/', name: str = ''):
+    assert name != '', 'Please use a valid config'
 
     with open(path + name + '.yaml', "r") as ymlfile:
         cfg = yaml.safe_load(ymlfile)
