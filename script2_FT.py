@@ -71,8 +71,10 @@ def apply_LoRA(model, auto_prepare: bool):
     )
 
     if auto_prepare:
+        print(f'[-] Preparing model for 8bit training [auto-mode] ...')
         model = prepare_model_for_int8_training(model)    # if prepare is False, the preprocessing is done before
     else:
+        print(f'[-] Preparing model for 8bit training [manual-mode] ...')
         # manual model preparation
         for param in model.parameters():
             param.requires_grad = False     # freeze all parameters
@@ -89,6 +91,7 @@ def apply_LoRA(model, auto_prepare: bool):
             CastOutputToFloat(getattr(model, list(model.named_children())[-1][0]))
         )
     
+    print(f'[-] Getting peft model ...')
     model = get_peft_model(model, lora_config)
 
     return model
@@ -98,6 +101,7 @@ def main():
     config = load_config(name = 'debug_FT')
 
     if torch.cuda.is_available():
+        print(f'[-] CUDA detected, downloading {config["generation"]["model_id"]} model in 8-bit mode')
         load_8_bit = True
         repo_id = 'DanielSc4/' + config['generation']['model_id'].split('/')[1] + '-FT-LoRA-8bit-test1'
         model = AutoModelForCausalLM.from_pretrained(
@@ -107,21 +111,25 @@ def main():
             load_in_8bit = True,
         )
     else:
+        print(f'[-] No CUDA detected, downloading {config["generation"]["model_id"]} model, fp32')
         load_8_bit = False
         repo_id = 'DanielSc4/' + config['generation']['model_id'].split('/')[1] + '-FT-LoRA-test1'
         model = AutoModelForCausalLM.from_pretrained(
             config['generation']['model_id'], 
         )
-
+    
+    print(f'[-] Downloading tokenizer ...')
     tokenizer = AutoTokenizer.from_pretrained(config['generation']['model_id'])
     tokenizer.padding_side = "left"  # Allow batched inference
 
+    print(f'[-] Getting dataset ...')
     # dataset (default split 10% val, 90% train)
     train_dataset, val_dataset = get_dataset(config, tokenizer)
     train_dataset = train_dataset.shuffle()
     
     model = apply_LoRA(model=model, auto_prepare = False)
     print_trainable_parameters(model)
+
 
     train_args = TrainingArguments(
         **config['fine_tune_args'],
@@ -142,14 +150,17 @@ def main():
             padding=True,
         ),
     )
-
+    print(f'[-] Training ...')
     trainer.train()
 
+    print(f'[-] Uploading to HF hub ...')
     # assuming debug if subset is active
     if not config['data']['subset']:
         # push to hub
         model.push_to_hub(repo_id)
         print('https://huggingface.co/' + repo_id)
+    
+    print(f'[-] Done')
 
 
 if __name__ == '__main__':
