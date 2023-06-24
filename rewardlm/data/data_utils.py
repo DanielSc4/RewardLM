@@ -161,6 +161,6 @@ def get_dataset_CLM(data, tokenizer, context_length = 512, custom_prompt = '{pro
         
         return tokenized
     
-    tokenized_datasets = raw_dataset.map(_tokenize)
+    tokenized_datasets = raw_dataset.map(_tokenize, remove_columns=raw_dataset.column_names)
 
     return tokenized_datasets

@@ -2,14 +2,12 @@
 
 import torch
 import torch.nn as nn
-from transformers import AutoModelForCausalLM, AutoTokenizer, GenerationConfig, Trainer, TrainingArguments, DataCollatorForLanguageModeling
+from transformers import AutoModelForCausalLM, AutoTokenizer, GenerationConfig, Trainer, TrainingArguments, DataCollatorForSeq2Seq
 from peft import LoraConfig, get_peft_model, prepare_model_for_int8_training
 from rewardlm.data.data_utils import get_DIALOCONAN_prepro, get_dataset_CLM
 from rewardlm.utils import load_config
 
 import os
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-os.environ['BITSANDBYTES_NOWELCOME'] = '1'
 
     
 def print_trainable_parameters(model) -> None:
@@ -32,6 +30,7 @@ def get_dataset(config, tokenizer, val_set_per: float = .1):
         print('getting subset')
         # select only the first `subset_size` samples
         data = data[:config['data']['subset_size']]
+
     dataset = get_dataset_CLM(
         data, 
         context_length = 512, 
@@ -42,7 +41,7 @@ def get_dataset(config, tokenizer, val_set_per: float = .1):
         assert val_set_per < 1, f'val_set_per should be less than 1 ([0 - 99]%), {val_set_per} given'
 
         train_eval_d = dataset.train_test_split(
-            test_size = int(len(dataset) * val_set_per), shuffle=True, seed=42,
+            test_size = val_set_per, shuffle=True, seed=42,
         )
         train_dataset, val_dataset = train_eval_d['train'], train_eval_d['test']
     else:
@@ -68,7 +67,6 @@ def apply_LoRA(model, auto_prepare: bool):
         bias = 'none',
         task_type = 'CAUSAL_LM',
     )
-    model = get_peft_model(model, lora_config)
 
     if auto_prepare:
         model = prepare_model_for_int8_training(model)    # if prepare is False, the preprocessing is done before
@@ -88,6 +86,8 @@ def apply_LoRA(model, auto_prepare: bool):
             list(model.named_children())[-1][0],    # name of the attribute
             CastOutputToFloat(getattr(model, list(model.named_children())[-1][0]))
         )
+    
+    model = get_peft_model(model, lora_config)
 
     return model
 
@@ -112,9 +112,20 @@ def main():
         )
 
     tokenizer = AutoTokenizer.from_pretrained(config['generation']['model_id'])
+    tokenizer.padding_side = "left"  # Allow batched inference
 
     # dataset (default split 10% val, 90% train)
     train_dataset, val_dataset = get_dataset(config, tokenizer)
+    train_dataset = train_dataset.shuffle()
+
+    # debug
+    print({
+        i: (len(x1), len(x2)) 
+        for i, (x1, x2) in enumerate(
+            zip(train_dataset['input_ids'], train_dataset['labels'])
+            )
+        }
+    )
     
     model = apply_LoRA(model=model, auto_prepare = False)
     print_trainable_parameters(model)
@@ -131,12 +142,16 @@ def main():
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
         args=train_args,
-        data_collator = DataCollatorForLanguageModeling(
+        data_collator = DataCollatorForSeq2Seq(     # Using data collator for seq2seq because the labels are already in dataset
             tokenizer, 
-            mlm = False, 
-            # return_tensors='pt',
+            pad_to_multiple_of=8,
+            return_tensors='pt',
+            padding=True,
         ),
     )
+    # debug
+    dataloader = trainer.get_train_dataloader()
+
     trainer.train()
 
     # assuming debug if subset is active
@@ -147,4 +162,6 @@ def main():
 
 
 if __name__ == '__main__':
+    os.environ["TOKENIZERS_PARALLELISM"] = "false"
+    os.environ['BITSANDBYTES_NOWELCOME'] = '1'
     main()
