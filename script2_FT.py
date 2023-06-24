@@ -119,15 +119,6 @@ def main():
     # dataset (default split 10% val, 90% train)
     train_dataset, val_dataset = get_dataset(config, tokenizer)
     train_dataset = train_dataset.shuffle()
-
-    # debug
-    print({
-        i: (len(x1), len(x2)) 
-        for i, (x1, x2) in enumerate(
-            zip(train_dataset['input_ids'], train_dataset['labels'])
-            )
-        }
-    )
     
     model = apply_LoRA(model=model, auto_prepare = False)
     print_trainable_parameters(model)
@@ -151,8 +142,6 @@ def main():
             padding=True,
         ),
     )
-    # debug
-    dataloader = trainer.get_train_dataloader()
 
     trainer.train()
 
