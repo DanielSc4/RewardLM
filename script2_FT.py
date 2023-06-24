@@ -6,6 +6,8 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, GenerationConfig, 
 from peft import LoraConfig, get_peft_model, prepare_model_for_int8_training
 from rewardlm.data.data_utils import get_DIALOCONAN_prepro, get_dataset_CLM
 from rewardlm.utils import load_config
+from huggingface_hub import login
+import wandb
 
 import os
 
@@ -162,6 +164,11 @@ def main():
 
 
 if __name__ == '__main__':
+    # login to huggingface_hub and wandb
+    credentials = load_config(path = './', name = 'credentials')
+    login(token = credentials['huggingface_hub'])
+    wandb.login(anonymous='allow', key = credentials['wandb'])
+
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
     os.environ['BITSANDBYTES_NOWELCOME'] = '1'
     main()
