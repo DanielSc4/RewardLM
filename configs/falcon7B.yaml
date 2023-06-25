@@ -1,0 +1,39 @@
+# tiiuae/falcon-7b-instruct
+
+generation:
+  model_id: tiiuae/falcon-7b-instruct
+  
+  custom_prompt:
+    # from LLaMA
+    user_name: '### Question:'
+    bot_name: '### Answer:'
+  # temp generation config: TODO: find the best one
+  generation_config:
+    max_new_tokens: 256
+    min_new_tokens: 4
+    do_sample: yes
+    num_beams: 4
+    early_stopping: no
+    temperature: 0.7
+    top_p: 0.7
+    top_k: 50
+
+fine_tune_args:
+  per_device_eval_batch_size: 32
+  gradient_accumulation_steps: 2
+  warmup_steps: 100
+  num_train_epochs: 4
+  learning_rate: 0.0003
+  optim: 'adamw_torch'
+  save_strategy: "steps"
+  save_steps: 200
+  auto_find_batch_size: yes
+  use_mps_device: no
+  logging_strategy: 'steps'
+  logging_steps: 10
+  save_total_limit: 4
+  report_to: wandb
+
+data:
+  subset: no   # Used for debug. If no, the following will be ignored
+  subset_size: 30
