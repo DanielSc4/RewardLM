@@ -8,10 +8,12 @@ from rewardlm.data.data_utils import get_DIALOCONAN_prepro, get_dataset_CLM
 from rewardlm.utils import load_config
 from huggingface_hub import login
 import wandb
-
 import os
+import datetime
+now = datetime.datetime.now()   # getting current date for log
 
-    
+
+
 def print_trainable_parameters(model) -> None:
     """Prints the number of trainable parameters in the model
     """
@@ -99,6 +101,7 @@ def apply_LoRA(model, auto_prepare: bool):
 
 def main():
     config = load_config(name = 'RedPajama-INCITE-Chat-3B-v1')
+    print(now)
 
     if torch.cuda.is_available():
         print(f'[-] CUDA detected, downloading {config["generation"]["model_id"]} model in 8-bit mode')
@@ -121,6 +124,8 @@ def main():
     print(f'[-] Downloading tokenizer ...')
     tokenizer = AutoTokenizer.from_pretrained(config['generation']['model_id'])
     tokenizer.padding_side = "left"  # Allow batched inference
+    if tokenizer.pad_token_id is None:
+        tokenizer.pad_token_id = 0      # unk. we want this to be different from the eos token
 
     print(f'[-] Getting dataset ...')
     # dataset (default split 10% val, 90% train)
@@ -140,7 +145,7 @@ def main():
         fp16 = True if torch.cuda.is_available() else False,
         evaluation_strategy='steps' if val_dataset else 'no',
         eval_steps=200 if val_dataset else None,
-        run_name=repo_id,
+        run_name=repo_id + str(now).replace(' ', '_'),
     )
     trainer = Trainer(
         model=model,
@@ -173,8 +178,6 @@ if __name__ == '__main__':
     login(token = credentials['huggingface_hub'])
     wandb.login(anonymous='allow', key = credentials['wandb'])
 
-    import datetime
-    now = datetime.datetime.now()
     print(f'Running: {now}')
 
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
