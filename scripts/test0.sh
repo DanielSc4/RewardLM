@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH --time=00:01:00
-#SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --job-name=python_example
-#SBATCH --mem=800
+#SBATCH --job-name=fine-tune-red-chat-3B
+#SBATCH --time=3:00:00
+#SBATCH --mem=30GB
+#SBATCH --gpus-per-node=a100.20gb:1
+#SBATCH --output=/home1/p313544/slurm_logs/%x.%j.out
 
 
 # single CPU only script
@@ -15,15 +15,20 @@ cd /home1/p313544
 source .venv/bin/activate
 
 echo "Python version: $(python --version)"
+nvidia-smi
+
 
 # User's vars
 ## All scripts must be in the PATH_TO_PRJ/scripts directory!
 PATH_TO_PRJ=/home1/p313544/Documents/RewardLM
-SCRIPT_NAME=job_test.py
+SCRIPT_NAME=script2_FT.py
+
+# checkpoint save path
+export PATH_TO_STORAGE=/scratch/p313544/storage_cache/
+
 
 echo "Executing python script..."
-python $PATH_TO_PRJ/scripts/$SCRIPT_NAME
-
+python $PATH_TO_PRJ/$SCRIPT_NAME
 
 
 

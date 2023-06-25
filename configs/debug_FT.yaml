@@ -33,7 +33,6 @@ fine_tune_args:
   logging_strategy: 'steps'
   logging_steps: 10
   save_total_limit: 4
-  output_dir: './checkpoints/fine_tune/'
   report_to: wandb
 
 data:

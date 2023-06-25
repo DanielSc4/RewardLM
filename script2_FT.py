@@ -98,7 +98,7 @@ def apply_LoRA(model, auto_prepare: bool):
 
 
 def main():
-    config = load_config(name = 'debug_FT')
+    config = load_config(name = 'RedPajama-INCITE-Chat-3B-v1')
 
     if torch.cuda.is_available():
         print(f'[-] CUDA detected, downloading {config["generation"]["model_id"]} model in 8-bit mode')
@@ -133,6 +133,10 @@ def main():
 
     train_args = TrainingArguments(
         **config['fine_tune_args'],
+        output_dir=os.path.join(
+            os.environ['PATH_TO_STORAGE'] if 'PATH_TO_STORAGE' in os.environ else '.', 
+            'checkpoints/fine_tune/'
+        ),
         fp16 = True if torch.cuda.is_available() else False,
         evaluation_strategy='steps' if val_dataset else 'no',
         eval_steps=200 if val_dataset else None,
@@ -168,6 +172,10 @@ if __name__ == '__main__':
     credentials = load_config(path = './', name = 'credentials')
     login(token = credentials['huggingface_hub'])
     wandb.login(anonymous='allow', key = credentials['wandb'])
+
+    import datetime
+    now = datetime.datetime.now()
+    print(f'Running: {now}')
 
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
     os.environ['BITSANDBYTES_NOWELCOME'] = '1'

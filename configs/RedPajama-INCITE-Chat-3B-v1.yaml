@@ -2,10 +2,7 @@
 
 generation:
   model_id: togethercomputer/RedPajama-INCITE-Chat-3B-v1
-  lr: 0.0003
-  epochs: 3
-  initial_bs: 16
-  dtype: 8-bit    # for toxicity meter
+  
   custom_prompt:
     user_name: '<human>:'
     bot_name: '<bot>:'
@@ -19,6 +16,22 @@ generation:
     temperature: 0.7
     top_p: 0.7
     top_k: 50
+
+fine_tune_args:
+  per_device_eval_batch_size: 32
+  gradient_accumulation_steps: 2
+  warmup_steps: 100
+  num_train_epochs: 4
+  learning_rate: 0.0003
+  optim: 'adamw_torch'
+  save_strategy: "steps"
+  save_steps: 200
+  auto_find_batch_size: yes
+  use_mps_device: no
+  logging_strategy: 'steps'
+  logging_steps: 10
+  save_total_limit: 4
+  report_to: wandb
 
 data:
   subset: no   # Used for debug. If no, the following will be ignored
