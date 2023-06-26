@@ -1,8 +1,7 @@
 # tiiuae/falcon-7b-instruct
 
-generation:
-  model_id: tiiuae/falcon-7b-instruct
-  
+model_id: tiiuae/falcon-7b-instruct
+generation:  
   custom_prompt:
     # from LLaMA
     user_name: '### Question:'
@@ -17,6 +16,9 @@ generation:
     temperature: 0.7
     top_p: 0.7
     top_k: 50
+  
+RL_args:
+  learning_rate: 0.000005
 
 fine_tune_args:
   per_device_eval_batch_size: 32

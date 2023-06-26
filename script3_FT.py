@@ -106,27 +106,27 @@ def main(config_name: str):
     config = load_config(name = config_name)
 
     if torch.cuda.is_available():
-        print(f'[-] CUDA detected, downloading {config["generation"]["model_id"]} model in 8-bit mode')
+        print(f'[-] CUDA detected, downloading {config["model_id"]} model in 8-bit mode')
         load_8_bit = True
-        repo_id = 'DanielSc4/' + config['generation']['model_id'].split('/')[1] + '-FT-LoRA-8bit-test1'
+        repo_id = 'DanielSc4/' + config['model_id'].split('/')[1] + '-FT-LoRA-8bit-test1'
         model = AutoModelForCausalLM.from_pretrained(
-            config['generation']['model_id'], 
+            config['model_id'], 
             device_map="auto",
             torch_dtype=torch.float16,
             load_in_8bit = True,
             trust_remote_code=True,
         )
     else:
-        print(f'[-] No CUDA detected, downloading {config["generation"]["model_id"]} model, fp32')
+        print(f'[-] No CUDA detected, downloading {config["model_id"]} model, fp32')
         load_8_bit = False
-        repo_id = 'DanielSc4/' + config['generation']['model_id'].split('/')[1] + '-FT-LoRA-test1'
+        repo_id = 'DanielSc4/' + config['model_id'].split('/')[1] + '-FT-LoRA-test1'
         model = AutoModelForCausalLM.from_pretrained(
-            config['generation']['model_id'],
+            config['model_id'],
             trust_remote_code=True, 
         )
     
     print(f'[-] Downloading tokenizer ...')
-    tokenizer = AutoTokenizer.from_pretrained(config['generation']['model_id'])
+    tokenizer = AutoTokenizer.from_pretrained(config['model_id'])
     tokenizer.padding_side = "left"  # Allow batched inference
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token_id = 0      # unk. we want this to be different from the eos token

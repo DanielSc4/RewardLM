@@ -1,8 +1,7 @@
 # togethercomputer/RedPajama-INCITE-Chat-3B-v1
 
+model_id: togethercomputer/RedPajama-INCITE-Chat-3B-v1
 generation:
-  model_id: togethercomputer/RedPajama-INCITE-Chat-3B-v1
-  
   custom_prompt:
     user_name: '<human>:'
     bot_name: '<bot>:'
