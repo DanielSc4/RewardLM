@@ -9,6 +9,7 @@ from rewardlm.utils import load_config
 from huggingface_hub import login
 import wandb
 import os
+from argparse import ArgumentParser
 import datetime
 now = datetime.datetime.now()   # getting current date for log
 
@@ -99,9 +100,10 @@ def apply_LoRA(model, auto_prepare: bool):
     return model
 
 
-def main():
-    config = loae_config(name = 'falcon7B')
+def main(config_name: str):
     print(now)
+    print(f'[-] Loading {config_name} config')
+    config = load_config(name = config_name)
 
     if torch.cuda.is_available():
         print(f'[-] CUDA detected, downloading {config["generation"]["model_id"]} model in 8-bit mode')
@@ -173,6 +175,12 @@ def main():
 
 
 if __name__ == '__main__':
+    parser = ArgumentParser(description='Process some integers.')
+    parser.add_argument('-c', '--config', required = True, help = 'Config name (without the .yaml). Files are stored in PROJ_PATH/configs/*.yaml')
+
+    args = parser.parse_args()
+    config_name = args.config
+
     # login to huggingface_hub and wandb
     credentials = load_config(path = './', name = 'credentials')
     login(token = credentials['huggingface_hub'])
@@ -182,4 +190,4 @@ if __name__ == '__main__':
 
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
     os.environ['BITSANDBYTES_NOWELCOME'] = '1'
-    main()
+    main(config_name = config_name)

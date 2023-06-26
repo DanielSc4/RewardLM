@@ -30,7 +30,7 @@ export PATH_TO_STORAGE=/scratch/p313544/storage_cache/
 
 cd $PATH_TO_PRJ
 echo "Executing python script..."
-python $SCRIPT_NAME
+python $SCRIPT_NAME -c falcon7B
 
 
 
