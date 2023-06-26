@@ -102,7 +102,6 @@ def main(config_name: str):
 
     if torch.cuda.is_available():
         print(f'[-] CUDA detected, downloading {config["model_id"]} model in 8-bit mode')
-        load_8_bit = True
         repo_id = 'DanielSc4/' + config['model_id'].split('/')[1] + '-FT-LoRA-8bit-test1'
         model = AutoModelForCausalLM.from_pretrained(
             config['model_id'], 
@@ -113,7 +112,6 @@ def main(config_name: str):
         )
     else:
         print(f'[-] No CUDA detected, downloading {config["model_id"]} model, fp32')
-        load_8_bit = False
         repo_id = 'DanielSc4/' + config['model_id'].split('/')[1] + '-FT-LoRA-test1'
         model = AutoModelForCausalLM.from_pretrained(
             config['model_id'],

@@ -105,7 +105,7 @@ def main(config_name: str):
         # TODO: check if missing optimizer is good
     )
 
-
+    print(f'[-] Training ...')
     for n_batch, batch in tqdm(enumerate(ppo_trainer.dataloader)):
         query_tensors = batch["input_ids"]      # dim: (should) [batch_siz, n_tokens]
 
@@ -140,6 +140,7 @@ def main(config_name: str):
         model.pretrained_model.config.use_cache = False
         stats = ppo_trainer.step(query_tensors, response_tensors, rewards)
         ppo_trainer.log_stats(stats, batch, rewards)
+
 
     print(f'[-] Uploading to HF hub ...')
     # assuming debug if subset is active
