@@ -52,11 +52,7 @@ def main(config_name: str):
     sent_kwargs = {"return_all_scores": True, "function_to_apply": "none", "batch_size": config.mini_batch_size}
 
     lora_config = LoraConfig(
-        r=16,
-        lora_alpha=32,
-        lora_dropout=0.05,
-        bias="none",
-        task_type="CAUSAL_LM",
+        **config['LoRA_config'],
     )
 
     # download model
@@ -92,7 +88,7 @@ def main(config_name: str):
     print(f'[-] Getting dataset ...')
     dataset = []
 
-    
+
     ppo_trainer = PPOTrainer(
         ppo_config, 
         model, 

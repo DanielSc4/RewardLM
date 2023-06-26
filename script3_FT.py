@@ -62,15 +62,10 @@ class CastOutputToFloat(nn.Sequential):
         return super().forward(x).to(torch.float32)
     
 
-def apply_LoRA(model, auto_prepare: bool):
+def apply_LoRA(model, auto_prepare: bool, lora_kwargs: dict):
     ## Required a peft model (ensure to have one using get_peft_model fun from peft)
     lora_config = LoraConfig(
-        r = 32,
-        lora_alpha = 32,
-        target_modules = None, # handled automatically by peft
-        lora_dropout = .05,
-        bias = 'none',
-        task_type = 'CAUSAL_LM',
+        **lora_kwargs,
     )
 
     if auto_prepare:
@@ -137,7 +132,11 @@ def main(config_name: str):
     train_dataset = train_dataset.shuffle()
     
     # apply LoRA
-    model = apply_LoRA(model=model, auto_prepare = False)
+    model = apply_LoRA(
+        model=model, 
+        auto_prepare=False, 
+        lora_kwargs=config['LoRA_config'],
+    )
     print_trainable_parameters(model)
 
 
