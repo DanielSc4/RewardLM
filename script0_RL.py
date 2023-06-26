@@ -11,6 +11,7 @@ from trl import (
     set_seed,
 )
 from transformers import AutoTokenizer, DataCollatorForSeq2Seq
+from datasets import Dataset
 from peft import LoraConfig
 from tqdm import tqdm
 
@@ -34,7 +35,27 @@ def print_trainable_parameters(model) -> None:
     
     print(f'trainable params: {train_params} || all params {all_params} || trainable(%): {train_params / all_params * 100:.2f}')
 
+def get_dataset(config, tokenizer):
+    data = get_DIALOCONAN_prepro(
+        **config['generation']['custom_prompt'],
+        delete_last_assistant_response = True
+    )
+    if config['data']['subset']:
+        print('[-] getting subset')
+        # select only the first `subset_size` samples
+        data = data[:config['data']['subset_size']]
+    
+    ds = Dataset.from_dict({'text': data})
 
+    def tokenize(sample):
+        sample["input_ids"] = tokenizer.encode(sample["text"])
+        sample["query"] = tokenizer.decode(sample["input_ids"])
+        return sample
+    
+    ds = ds.map(tokenize, batched=False)
+    ds.set_format(type="torch")
+    return ds
+    
 
 
 def main(config_name: str):
@@ -78,15 +99,14 @@ def main(config_name: str):
     print(f'[-] Downloading tokenizer ...')
     tokenizer = AutoTokenizer.from_pretrained(config.model_name)
     tokenizer.padding_side = "left"  # Allow batched inference
-    if tokenizer.pad_token_id is None:
-        tokenizer.pad_token_id = 0      # unk. we want this to be different from the eos token
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token      # unk. we want this to be different from the eos token
 
     print_trainable_parameters(model=model)
 
-    # TODO: dataset
-    # ...
+    # dataset
     print(f'[-] Getting dataset ...')
-    dataset = []
+    dataset = get_dataset(config=config, tokenizer=tokenizer)
 
 
     ppo_trainer = PPOTrainer(

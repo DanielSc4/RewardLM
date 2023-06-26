@@ -32,7 +32,7 @@ def get_dataset(config, tokenizer, val_set_per: float = .1):
     data = get_DIALOCONAN_prepro(**config['generation']['custom_prompt'])
 
     if config['data']['subset']:
-        print('getting subset')
+        print('[-] getting subset')
         # select only the first `subset_size` samples
         data = data[:config['data']['subset_size']]
 
