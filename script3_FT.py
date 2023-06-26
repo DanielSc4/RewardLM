@@ -114,13 +114,15 @@ def main(config_name: str):
             device_map="auto",
             torch_dtype=torch.float16,
             load_in_8bit = True,
+            trust_remote_code=True,
         )
     else:
         print(f'[-] No CUDA detected, downloading {config["generation"]["model_id"]} model, fp32')
         load_8_bit = False
         repo_id = 'DanielSc4/' + config['generation']['model_id'].split('/')[1] + '-FT-LoRA-test1'
         model = AutoModelForCausalLM.from_pretrained(
-            config['generation']['model_id'], 
+            config['generation']['model_id'],
+            trust_remote_code=True, 
         )
     
     print(f'[-] Downloading tokenizer ...')
