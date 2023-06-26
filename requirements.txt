@@ -13,3 +13,4 @@ tqdm
 transformers
 trl
 wandb
+einops

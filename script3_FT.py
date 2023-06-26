@@ -136,6 +136,7 @@ def main(config_name: str):
     train_dataset, val_dataset = get_dataset(config, tokenizer)
     train_dataset = train_dataset.shuffle()
     
+    # apply LoRA
     model = apply_LoRA(model=model, auto_prepare = False)
     print_trainable_parameters(model)
 
