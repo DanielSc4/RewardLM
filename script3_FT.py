@@ -148,6 +148,7 @@ def main(config_name: str):
         evaluation_strategy='steps' if val_dataset else 'no',
         eval_steps=200 if val_dataset else None,
         run_name=repo_id + str(now).replace(' ', '_'),
+        hub_model_id = repo_id,
     )
     trainer = Trainer(
         model=model,
@@ -167,6 +168,7 @@ def main(config_name: str):
     print(f'[-] Uploading to HF hub ...')
     # assuming debug if subset is active
     if not config['data']['subset']:
+        trainer.push_to_hub()
         # push to hub
         model.push_to_hub(repo_id)
         print('https://huggingface.co/' + repo_id)
