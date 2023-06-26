@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=fine-tune-red-chat-3B
+#SBATCH --job-name=fine-tune-falcon-instruct-7B
 #SBATCH --time=03:00:00
 #SBATCH --mem=30GB
 #SBATCH --gpus-per-node=a100.20gb:1
@@ -21,7 +21,7 @@ pwd
 # User's vars
 ## All scripts must be in the PATH_TO_PRJ/scripts directory!
 PATH_TO_PRJ=/home1/p313544/Documents/RewardLM
-SCRIPT_NAME=script2_FT.py
+SCRIPT_NAME=script3_FT.py
 
 
 # checkpoint save path
