@@ -150,7 +150,7 @@ def main(config_name: str):
 
         if debug:
             end = time.time()
-            print(f'  [t] elapsed: {end - start}')
+            print(f'  [t] \'- elapsed: {end - start}')
             start = time.time()
             print(f'  [t] Decoding responses ...')
         # decoded response
@@ -164,11 +164,11 @@ def main(config_name: str):
 
         if debug:
             end = time.time()
-            print(f'  [t] elapsed: {end - start}')
+            print(f'  [t] \'- elapsed: {end - start}')
             start = time.time()
             print(f'  [t] Generating new dataset for rewards ...')
         model_tox_set = ToxicityGeneratedSet(
-            prompts = batch['prompt'],
+            prompts = batch['query'],
             responses = batch['response'],
             tokenizer = reward_manager.tokenizer,
             max_len = 512,
@@ -176,17 +176,19 @@ def main(config_name: str):
 
         if debug:
             end = time.time()
-            print(f'  [t] elapsed: {end - start}')
+            print(f'  [t] \'- elapsed: {end - start}')
             start = time.time()
             print(f'  [t] Getting rewards score ...')
         result_tox = reward_manager.get_batch_score_pair(
-            DataLoader(model_tox_set, batch_size = len(batch['prompt']), shuffle = False)
+            DataLoader(model_tox_set, batch_size = len(batch['query']), shuffle = False)
         ) 
         rewards = [torch.tensor(s) for s in result_tox['response_score']]
 
         # debug output w/ decoded query, response and calculated score
         if debug:
             for q, r, s in zip(batch['query'], batch['response'], rewards):
+                q = q.replace('\n', ' ').rstrip()
+                r = r.replace('\n', ' ').rstrip()
                 print('\t query:')
                 if len(q) > 200:
                     print(f'\t {q[:100]} [...] {q[100:]}')
@@ -205,13 +207,13 @@ def main(config_name: str):
         model.pretrained_model.config.use_cache = False
         if debug:
             end = time.time()
-            print(f'  [t] elapsed: {end - start}')
+            print(f'  [t] \'- elapsed: {end - start}')
             start = time.time()
             print(f'  [t] Updating model ...')
         stats = ppo_trainer.step(query_tensors, response_tensors, rewards)
         if debug:
             end = time.time()
-            print(f'  [t] elapsed: {end - start}')
+            print(f'  [t] \'- elapsed: {end - start}')
             start = time.time()
             print(f'  [t] Model updated ...')
         ppo_trainer.log_stats(stats, batch, rewards)

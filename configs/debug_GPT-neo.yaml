@@ -11,14 +11,13 @@ generation:
     bot_name: '### Answer:'
   # temp generation config: TODO: find the best one
   generation_config:
-    max_new_tokens: 256
+    max_new_tokens: 128
     min_new_tokens: 4
-    do_sample: no
-    num_beams: 4
-    early_stopping: no
+    do_sample: yes
     temperature: 0.7
-    top_p: 0.7
+    top_p: 0.8
     top_k: 50
+    no_repeat_ngram_size: 2
   
 RL_args:
   reward_model_id: facebook/roberta-hate-speech-dynabench-r4-target
