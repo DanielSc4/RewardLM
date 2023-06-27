@@ -77,7 +77,7 @@ def main(config_name: str):
     config = load_config(name = config_name)
     debug = config['debug']
     if debug:
-        print(f'  [init] global free and total GPU memory occupied: {gpu_usage()} GB.')
+        print(f'[init] global free and total GPU memory occupied: {gpu_usage()} GB.')
 
     ppo_config = PPOConfig(
         model_name=config['model_id'],
@@ -217,16 +217,14 @@ def main(config_name: str):
             end = time.time()
             print(f'  [t] \'- elapsed: {end - start}')
             start = time.time()
-            if torch.cuda.is_available():
-                print(f'  [t] [pre-step] global free and total GPU memory occupied: {gpu_usage()} GB.')
+            print(f'  [t] [pre-step] global free and total GPU memory occupied: {gpu_usage()} GB.')
             print(f'  [t] Updating model ...')
         stats = ppo_trainer.step(query_tensors, response_tensors, rewards)
         if debug:
             end = time.time()
             print(f'  [t] \'- elapsed: {end - start}')
             start = time.time()
-            if torch.cuda.is_available():
-                print(f'  [t] [post-step] global free and total GPU memory occupied: {gpu_usage()} GB.')
+            print(f'  [t] [post-step] global free and total GPU memory occupied: {gpu_usage()} GB.')
             print(f'  [t] Model updated ...')
         ppo_trainer.log_stats(stats, batch, rewards)
 
