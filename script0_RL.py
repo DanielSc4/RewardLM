@@ -1,7 +1,8 @@
 import torch
-from rewardlm.core.RL.RLModel import RLModel
+from torch.utils.data import DataLoader
+from rewardlm.core.RewardModel import RewardModel
 from rewardlm.data.data_utils import get_DIALOCONAN_prepro
-from transformers import GenerationConfig
+from rewardlm.data.CustomDatasets import ToxicityGeneratedSet
 from rewardlm.utils import load_config
 
 from trl import (
@@ -18,6 +19,9 @@ from tqdm import tqdm
 from huggingface_hub import login
 import wandb
 import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ['BITSANDBYTES_NOWELCOME'] = '1'
+
 from argparse import ArgumentParser
 import datetime
 now = datetime.datetime.now()   # getting current date for log
@@ -125,6 +129,12 @@ def main(config_name: str):
         # TODO: check if missing optimizer is good
     )
 
+    print(f'[-] Getting reward_model ...')
+    reward_manager = RewardModel(
+        config['RL_args']['reward_model_id'], 
+        device = ppo_trainer.accelerator.device,
+    )
+
     print(f'[-] Training ...')
     for n_batch, batch in tqdm(enumerate(ppo_trainer.dataloader)):
         query_tensors = batch["input_ids"]      # dim: (should) [batch_siz, n_tokens]
@@ -145,15 +155,20 @@ def main(config_name: str):
             # skip_special_tokens=True,     # TODO: check if sholud be True
         )
 
-        # concatenate query and response given by the model
-        tot_texts = [q + r for q, r in zip(batch["query"], batch["response"])]
-        # TODO: get reward from RewardModel (token level?)
-        pipe_outputs = [
-            0.1,
-            0.99,
-            # ... len(query_tensors)
-        ]
-        rewards = [torch.tensor(output[1]["score"]) for output in pipe_outputs]
+        # concatenate query and response given by the model (useless; calculating scores only based on responses)
+        # tot_texts = [q + r for q, r in zip(batch["query"], batch["response"])]
+
+        model_tox_set = ToxicityGeneratedSet(
+            prompts = batch['prompt'],
+            responses = batch['response'],
+            tokenizer = reward_manager.tokenizer,
+            max_len = 512,
+        )
+
+        result_tox = reward_manager.get_batch_score_pair(
+            DataLoader(model_tox_set, batch_size = len(batch['prompt']), shuffle = False)
+        ) 
+        rewards = [torch.tensor(s) for s in result_tox['response_score']]
 
         # Run PPO step
         model.gradient_checkpointing_enable()
@@ -171,45 +186,6 @@ def main(config_name: str):
     
     print(f'[-] Done')
 
-    # rlmanager = RLModel(
-    #     model_id = config['generation']['model_id'],
-    #     reward_model_id = config['reward']['model_id'],
-    #     optimized = True,   # use LoRA
-    #     bs = config['PPO']['bs'],
-    #     mini_bs = config['PPO']['mini_bs'],
-    #     # force the use of CPU on Apple Silicon devices (mps not supported):
-    #     accelerator_kwargs = {
-    #         'cpu': False if torch.cuda.is_available() else True,
-    #     },
-    #     generation_config=GenerationConfig(
-    #         max_new_tokens = 512,
-    #         min_new_tokens = 5,
-    #         pad_token_id = 0,       # crashes while using batchsize > 1 only on mps device if not set
-    #         temperature = 1,
-    #         top_p = .7,
-    #         top_k = 0,
-    #         do_sample = True
-    #         # diversity_penalty = .1, # should use num_beam_groups > 1
-    #     )
-    # )
-
-    # data = get_DIALOCONAN_prepro(delete_last_assistant_response = True)
-    # if config['data']['subset']:
-    #     # select only the first `subset_size` samples
-    #     data = data[:config['data']['subset_size']]
-    # dataset = rlmanager.generate_dataset(text = data)
-
-    # stats = rlmanager.train_PPO(dataset = dataset)
-    # print('Done')
-
-    # # assuming debug if subset is active
-    # if not config['data']['subset']:
-    #     # save trainer (model, tokenizer & config) to the hub
-    #     repo_id = 'DanielSc4/' + config['generation']['model_id'].split('/')[1] + '-RL-LoRA-test0'
-
-    #     rlmanager.push_generator_to_hub(repo_id = repo_id)
-
-
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Process some integers.')
@@ -222,6 +198,5 @@ if __name__ == '__main__':
     credentials = load_config(path = './', name = 'credentials')
     login(token = credentials['huggingface_hub'])
     wandb.login(anonymous='allow', key = credentials['wandb'])
-    os.environ["TOKENIZERS_PARALLELISM"] = "false"
-    os.environ['BITSANDBYTES_NOWELCOME'] = '1'
+
     main(config_name=config_name)

@@ -19,6 +19,8 @@ generation:
     top_k: 50
   
 RL_args:
+  debug: yes              # CHANGE (prints output)
+  reward_model_id: facebook/roberta-hate-speech-dynabench-r4-target
   PPO_config:
     learning_rate: 0.000005
     log_with: ''          # CHANGE w/ wandb
