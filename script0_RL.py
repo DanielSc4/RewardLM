@@ -24,6 +24,7 @@ os.environ['BITSANDBYTES_NOWELCOME'] = '1'
 
 from argparse import ArgumentParser
 import datetime
+import time
 now = datetime.datetime.now()   # getting current date for log
 
 
@@ -137,6 +138,9 @@ def main(config_name: str):
         model.gradient_checkpointing_disable()
         model.config.use_cache = True
 
+        if debug:
+            print(f'  [t] Generating ...')
+            start = time.time()
         # Get response from Causal LM
         response_tensors = ppo_trainer.generate(
             query_tensors, 
@@ -144,6 +148,11 @@ def main(config_name: str):
             **config['generation']['generation_config']
         )
 
+        if debug:
+            end = time.time()
+            print(f'  [t] elapsed: {end - start}')
+            start = time.time()
+            print(f'  [t] Decoding responses ...')
         # decoded response
         batch["response"] = tokenizer.batch_decode(
             response_tensors,
@@ -153,7 +162,11 @@ def main(config_name: str):
         # concatenate query and response given by the model (useless; calculating scores only based on responses)
         # tot_texts = [q + r for q, r in zip(batch["query"], batch["response"])]
 
-
+        if debug:
+            end = time.time()
+            print(f'  [t] elapsed: {end - start}')
+            start = time.time()
+            print(f'  [t] Generating new dataset for rewards ...')
         model_tox_set = ToxicityGeneratedSet(
             prompts = batch['prompt'],
             responses = batch['response'],
@@ -161,6 +174,11 @@ def main(config_name: str):
             max_len = 512,
         )
 
+        if debug:
+            end = time.time()
+            print(f'  [t] elapsed: {end - start}')
+            start = time.time()
+            print(f'  [t] Getting rewards score ...')
         result_tox = reward_manager.get_batch_score_pair(
             DataLoader(model_tox_set, batch_size = len(batch['prompt']), shuffle = False)
         ) 
@@ -185,7 +203,17 @@ def main(config_name: str):
         # Run PPO step
         model.gradient_checkpointing_enable()
         model.pretrained_model.config.use_cache = False
+        if debug:
+            end = time.time()
+            print(f'  [t] elapsed: {end - start}')
+            start = time.time()
+            print(f'  [t] Updating model ...')
         stats = ppo_trainer.step(query_tensors, response_tensors, rewards)
+        if debug:
+            end = time.time()
+            print(f'  [t] elapsed: {end - start}')
+            start = time.time()
+            print(f'  [t] Model updated ...')
         ppo_trainer.log_stats(stats, batch, rewards)
 
 
