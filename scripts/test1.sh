@@ -2,7 +2,7 @@
 #SBATCH --job-name=fine-tune-falcon-instruct-7B
 #SBATCH --time=05:00:00
 #SBATCH --mem=30GB
-#SBATCH --gpus-per-node=a100.20gb:1
+#SBATCH --gpus-per-node=a100:1
 #SBATCH --output=/home1/p313544/slurm_logs/%x.%j.out
 
 
