@@ -2,6 +2,8 @@
 # EleutherAI/gpt-neo-125m
 
 model_id: EleutherAI/gpt-neo-125m
+debug: yes                # CHANGE (prints output)
+
 generation:  
   custom_prompt:
     # from LLaMA
@@ -19,11 +21,10 @@ generation:
     top_k: 50
   
 RL_args:
-  debug: yes              # CHANGE (prints output)
   reward_model_id: facebook/roberta-hate-speech-dynabench-r4-target
   PPO_config:
     learning_rate: 0.000005
-    log_with: ''          # CHANGE w/ wandb
+    log_with: null        # CHANGE w/ wandb
     mini_batch_size: 2    # (16) mini batch size (<= batch size) for each model forward pass 
     batch_size: 4         # (256) batch size used for each optimization step
     gradient_accumulation_steps: 1

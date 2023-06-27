@@ -60,12 +60,15 @@ def get_dataset(config, tokenizer):
     ds.set_format(type="torch")
     return ds
     
-
+def collator(data):
+    return dict((key, [d[key] for d in data]) for key in data[0])
 
 def main(config_name: str):
     print(now)
     print(f'[-] Loading {config_name} config')
+
     config = load_config(name = config_name)
+    debug = config['debug']
 
     ppo_config = PPOConfig(
         model_name=config['model_id'],
@@ -74,7 +77,7 @@ def main(config_name: str):
 
     # We then define the arguments to pass to the sentiment analysis pipeline.
     # We set `return_all_scores` to True to get the sentiment score for each token.
-    sent_kwargs = {"return_all_scores": True, "function_to_apply": "none", "batch_size": config.mini_batch_size}
+    # sent_kwargs = {"return_all_scores": True, "function_to_apply": "none", "batch_size": config['RL_args']['PPO_config']['mini_batch_size']}
 
     lora_config = LoraConfig(
         **config['LoRA_config'],
@@ -101,7 +104,7 @@ def main(config_name: str):
         )
 
     print(f'[-] Downloading tokenizer ...')
-    tokenizer = AutoTokenizer.from_pretrained(config.model_name)
+    tokenizer = AutoTokenizer.from_pretrained(config['model_id'])
     tokenizer.padding_side = "left"  # Allow batched inference
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token      # unk. we want this to be different from the eos token
@@ -112,21 +115,13 @@ def main(config_name: str):
     print(f'[-] Getting dataset ...')
     dataset = get_dataset(config=config, tokenizer=tokenizer)
 
-
     ppo_trainer = PPOTrainer(
         ppo_config, 
         model, 
         ref_model=None, 
         tokenizer=tokenizer, 
         dataset=dataset, 
-        # TODO: define correct datacollator
-        data_collator=DataCollatorForSeq2Seq(     # Using data collator for seq2seq because the labels are already in dataset
-            tokenizer, 
-            pad_to_multiple_of=8,
-            return_tensors='pt',
-            padding=True,
-        ),
-        # TODO: check if missing optimizer is good
+        data_collator=collator
     )
 
     print(f'[-] Getting reward_model ...')
@@ -158,6 +153,7 @@ def main(config_name: str):
         # concatenate query and response given by the model (useless; calculating scores only based on responses)
         # tot_texts = [q + r for q, r in zip(batch["query"], batch["response"])]
 
+
         model_tox_set = ToxicityGeneratedSet(
             prompts = batch['prompt'],
             responses = batch['response'],
@@ -169,6 +165,22 @@ def main(config_name: str):
             DataLoader(model_tox_set, batch_size = len(batch['prompt']), shuffle = False)
         ) 
         rewards = [torch.tensor(s) for s in result_tox['response_score']]
+
+        # debug output w/ decoded query, response and calculated score
+        if debug:
+            for q, r, s in zip(batch['query'], batch['response'], rewards):
+                print('\t query:')
+                if len(q) > 200:
+                    print(f'\t {q[:100]} [...] {q[100:]}')
+                else:
+                    print(f'\t {q}')
+                print('\t response:')
+                if len(r) > 200:
+                    print(f'\t {r[:100]} [...] {r[100:]}')
+                else:
+                    print(f'\t {r}')
+                print(f'\t score: {s}')
+                print()
 
         # Run PPO step
         model.gradient_checkpointing_enable()
