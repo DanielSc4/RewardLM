@@ -22,9 +22,9 @@ RL_args:
   PPO_config:
     learning_rate: 0.000005
     log_with: wandb       # CHANGE w/ wandb
-    mini_batch_size: 16   # (default: 16) mini batch size (<= batch size) for each model forward pass 
-    batch_size: 128       # (default: 256) batch size used for each optimization step (general bs)
-    gradient_accumulation_steps: 1
+    mini_batch_size: 4   # (default: 16) mini batch size (<= batch size) for each model forward pass 
+    batch_size: 64       # (default: 256) batch size used for each optimization step (general bs)
+    gradient_accumulation_steps: 2
 
 LoRA_config:
   r: 32                   # the rank of the update matrices. Lower -> fewer trainable params
