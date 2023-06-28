@@ -1,4 +1,8 @@
 import torch
+import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ['BITSANDBYTES_NOWELCOME'] = '1'
+
 from torch.utils.data import DataLoader
 from rewardlm.core.RewardModel import RewardModel
 from rewardlm.data.data_utils import get_DIALOCONAN_prepro
@@ -11,6 +15,8 @@ from trl import (
     PPOTrainer,
     set_seed,
 )
+set_seed(42)
+
 from transformers import AutoTokenizer, DataCollatorForSeq2Seq
 from datasets import Dataset
 from peft import LoraConfig
@@ -18,9 +24,6 @@ from tqdm import tqdm
 
 from huggingface_hub import login
 import wandb
-import os
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-os.environ['BITSANDBYTES_NOWELCOME'] = '1'
 
 from argparse import ArgumentParser
 import datetime
@@ -153,7 +156,8 @@ def main(config_name: str):
         response_tensors = ppo_trainer.generate(
             query_tensors, 
             return_prompt=False, 
-            **config['generation']['generation_config']
+            **config['generation']['generation_config'],
+            pad_token_id=tokenizer.eos_token_id,        # `to avoid Setting `pad_token_id` to `eos_token_id`:11 for open-end generation.` warning
         )
 
         if debug:

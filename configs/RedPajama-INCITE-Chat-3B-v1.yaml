@@ -1,11 +1,13 @@
 # togethercomputer/RedPajama-INCITE-Chat-3B-v1
 
 model_id: togethercomputer/RedPajama-INCITE-Chat-3B-v1
+debug: yes
+
 generation:
   custom_prompt:
+    # from original togethercomputer doc
     user_name: '<human>:'
     bot_name: '<bot>:'
-  # temp generation config: TODO: find the best one
   generation_config:
     max_new_tokens: 128
     min_new_tokens: 4
@@ -35,6 +37,8 @@ LoRA_config:
 
 fine_tune_args:
   per_device_eval_batch_size: 32
+  per_device_eval_batch_size: 4
+  eval_accumulation_steps: 5
   gradient_accumulation_steps: 2
   warmup_steps: 100
   num_train_epochs: 4
@@ -48,6 +52,7 @@ fine_tune_args:
   logging_steps: 10
   save_total_limit: 4
   report_to: wandb
+  push_to_hub: yes        # new_ test push to hub while training
 
 data:
   subset: no   # Used for debug. If no, the following will be ignored

@@ -1,24 +1,30 @@
 # tiiuae/falcon-7b-instruct
 
 model_id: tiiuae/falcon-7b-instruct
+debug: yes
+
 generation:  
   custom_prompt:
     # from LLaMA
     user_name: '### Question:'
     bot_name: '### Answer:'
-  # temp generation config: TODO: find the best one
   generation_config:
-    max_new_tokens: 256
+    max_new_tokens: 128
     min_new_tokens: 4
     do_sample: yes
-    num_beams: 4
-    early_stopping: no
     temperature: 0.7
-    top_p: 0.7
+    top_p: 0.8
     top_k: 50
+    no_repeat_ngram_size: 2
   
 RL_args:
-  learning_rate: 0.000005
+  reward_model_id: facebook/roberta-hate-speech-dynabench-r4-target
+  PPO_config:
+    learning_rate: 0.000005
+    log_with: wandb       # CHANGE w/ wandb
+    mini_batch_size: 16   # (default: 16) mini batch size (<= batch size) for each model forward pass 
+    batch_size: 128       # (default: 256) batch size used for each optimization step (general bs)
+    gradient_accumulation_steps: 1
 
 LoRA_config:
   r: 32                   # the rank of the update matrices. Lower -> fewer trainable params
