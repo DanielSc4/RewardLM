@@ -191,6 +191,8 @@ def main(config_name: str):
             print(f'  [t] \'- elapsed: {end - start}')
             start = time.time()
             print(f'  [t] Getting rewards score ... bs = {len(batch["query"])}')
+        
+        # TODO: return scores without softmax applied (remember that PPO tends to maximize the reward function)
         result_tox = reward_manager.get_batch_score_pair(
             DataLoader(model_tox_set, batch_size = len(batch['query']), shuffle = False)
         ) 

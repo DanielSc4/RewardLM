@@ -10,7 +10,7 @@ Reward a Language Model with pancakes 🥞
 - [ ] Add possibility of using a reward manager as a reward model, to have more control over the reward system.
 - [ ] Compatibility of ⚖️ ToxicityMeter with other datasets (possibly instructional).
 - [ ] Extend ⚖️ ToxicityMeter compatibility with 🤗 Accelerate.
-- [ ] Extend the possibility of managing parameters and configurations to 🥞RLAF.
+- [x] Extend the possibility of managing parameters and configurations to 🥞RLAF.
 - [ ] Use of [Inseq](https://github.com/inseq-team/inseq) for analysis and interpretability of generative models at ⚖️ ToxicityMeter.
 
 
