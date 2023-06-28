@@ -168,7 +168,7 @@ def main(config_name: str):
         # decoded response
         batch["response"] = tokenizer.batch_decode(
             response_tensors,
-            skip_special_tokens=True,     # TODO: check if sholud be False to keep the same tensor batch dimension (s)!
+            skip_special_tokens=True,
         )
 
         # concatenate query and response given by the model (useless; calculating scores only based on responses)
@@ -195,8 +195,9 @@ def main(config_name: str):
         # TODO: return scores without softmax applied (remember that PPO tends to maximize the reward function)
         result_tox = reward_manager.get_batch_score_pair(
             DataLoader(model_tox_set, batch_size = len(batch['query']), shuffle = False)
-        ) 
-        rewards = [torch.tensor(s) for s in result_tox['response_score']]
+        )
+        # 1 - score since the reward model gives 1 if toxic, 0 otherwise
+        rewards = [torch.tensor(1 - s) for s in result_tox['response_score']]
 
         # debug output w/ decoded query, response and calculated score
         if debug:
@@ -205,12 +206,12 @@ def main(config_name: str):
                 r = r.replace('\n', ' ').rstrip()
                 print('\t query:')
                 if len(q) > 200:
-                    print(f'\t {q[:100]} [...] {q[20:]}')
+                    print(f'\t {q[:100]} [...] {q[-50:]}')
                 else:
                     print(f'\t {q}')
                 print('\t response:')
                 if len(r) > 200:
-                    print(f'\t {r[:100]} [...] {r[20:]}')
+                    print(f'\t {r[:100]} [...] {r[-50:]}')
                 else:
                     print(f'\t {r}')
                 print(f'\t score: {s}')

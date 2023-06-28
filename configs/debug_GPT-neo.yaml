@@ -11,7 +11,7 @@ generation:
     bot_name: '### Answer:'
   # temp generation config: TODO: find the best one
   generation_config:
-    max_new_tokens: 128
+    max_new_tokens: 70
     min_new_tokens: 4
     do_sample: yes
     temperature: 0.7
@@ -24,9 +24,9 @@ RL_args:
   PPO_config:
     learning_rate: 0.000005
     log_with: null        # CHANGE w/ wandb
-    mini_batch_size: 2    # (16) mini batch size (<= batch size) for each model forward pass 
-    batch_size: 4         # (256) batch size used for each optimization step
-    gradient_accumulation_steps: 1
+    mini_batch_size: 4    # (16) mini batch size (<= batch size) for each model forward pass 
+    batch_size: 8         # (256) batch size used for each optimization step
+    gradient_accumulation_steps: 2
     
 LoRA_config:
   r: 32                   # the rank of the update matrices. Lower -> fewer trainable params
@@ -55,8 +55,8 @@ fine_tune_args:
   report_to: wandb
 
 data:
-  subset: no   # Used for debug. If no, the following will be ignored
-  subset_size: 30
+  subset: yes   # Used for debug. If no, the following will be ignored
+  subset_size: 100
 
 
 
