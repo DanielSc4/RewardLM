@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=RL_debug
-#SBATCH --time=00:10:00
+#SBATCH --time=00:20:00
 #SBATCH --mem=30GB
 #SBATCH --gpus-per-node=a100.20gb:1
 #SBATCH --output=/home1/p313544/slurm_logs/%x.%j.out

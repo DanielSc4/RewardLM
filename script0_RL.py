@@ -214,7 +214,7 @@ def main(config_name: str):
                     print(f'\t {r[:100]} [...] {r[-50:]}')
                 else:
                     print(f'\t {r}')
-                print(f'\t score: {s}')
+                print(f'\t score: {s} (inverted score, 1 is positive)')
                 print()
 
         # Run PPO step
@@ -238,10 +238,10 @@ def main(config_name: str):
 
     print(f'[-] Uploading to HF hub ...')
     # assuming debug if subset is active
-    if not config['data']['subset']:
+    # if not config['data']['subset']:
         # push to hub
-        model.push_to_hub(repo_id)
-        print('https://huggingface.co/' + repo_id)
+    model.push_to_hub(repo_id)
+    print('https://huggingface.co/' + repo_id)
     
     print(f'[-] Done')
 
