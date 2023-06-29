@@ -15,7 +15,15 @@ class CastOutputToFloat(nn.Sequential):
 
 
 class GenerativeModel:
-    def __init__(self, model_id: str, load_from_peft: bool = False, device: str = None, load_dtype: str = 'fp32', generation_config: GenerationConfig = None, accelerator_kwargs: dict = {},) -> None:
+    def __init__(
+            self, 
+            model_id: str, 
+            load_from_peft: bool = False, 
+            device: str = None, 
+            load_dtype: str = 'fp32', 
+            generation_config: GenerationConfig = None, 
+            accelerator_kwargs: dict = {},
+        ) -> None:
         """Wrapper class for all the generative models from 🤗 HuggingFace
 
         Args:
@@ -55,6 +63,7 @@ class GenerativeModel:
             print(f'Obtaining original model: {self.original_pretrained_model_id}')
             self.__load_from_peft(config, load_dtype)
         else:
+            self.original_pretrained_model_id == self.model_id
             if load_dtype == '8-bit':
                 self.model = AutoModelForCausalLM.from_pretrained(
                     model_id,
