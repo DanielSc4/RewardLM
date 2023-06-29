@@ -21,7 +21,7 @@ pwd
 # User's vars
 ## All scripts must be in the PATH_TO_PRJ/scripts directory!
 PATH_TO_PRJ=/home1/p313544/Documents/RewardLM
-SCRIPT_NAME=script0_RL.py
+SCRIPT_NAME=script_RL.py
 
 
 # checkpoint save path
