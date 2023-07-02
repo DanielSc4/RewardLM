@@ -14,3 +14,4 @@ transformers
 trl
 wandb
 einops
+inseq

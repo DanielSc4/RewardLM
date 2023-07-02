@@ -36,19 +36,17 @@ class GenerativeModel:
         print(f'Accelerator selected device: {self.accelerator.device}')
 
         if generation_config is None:
+            # default generation config
             self.generation_config = GenerationConfig(
-                max_new_tokens = 256,
+                max_new_tokens = 100,
                 min_new_tokens = 4,
-                num_beams = 4,
-                early_stopping = True,
-                # pad_token_id = 0,       # crashes while using batchsize > 1 only on mps device if not set
-                temperature = 0.8,
-                top_p = .75,
-                top_k = 40
-                # diversity_penalty = .1, # should use num_beam_groups > 1
+                temperature = 0.7,
+                top_p = 0.8,
+                top_k = 50,
+                no_repeat_ngram_size = 2,
             )
         else:
-            self.generation_config = generation_config
+            self.generation_config = GenerationConfig(**generation_config)
 
         self.load_dtype = load_dtype
         self.device = device
@@ -63,7 +61,7 @@ class GenerativeModel:
             print(f'Obtaining original model: {self.original_pretrained_model_id}')
             self.__load_from_peft(config, load_dtype)
         else:
-            self.original_pretrained_model_id == self.model_id
+            self.original_pretrained_model_id = self.model_id
             if load_dtype == '8-bit':
                 self.model = AutoModelForCausalLM.from_pretrained(
                     model_id,
@@ -93,12 +91,9 @@ class GenerativeModel:
         else:
             self.tokenizer = AutoTokenizer.from_pretrained(model_id)
         self.tokenizer.padding_side = "left"        # Allow batched inference
-        
-        # TODO: check where is best to set pad_token id to 0 or pad_token = eos_token!
-        # Setting to 0 from alpaca-lora finetune script
-        self.tokenizer.pad_token_id = (
-            0  # unk. we want this to be different from the eos token
-        )
+        # self.tokenizer.pad_token_id = (
+        #     0  # unk. we want this to be different from the eos token
+        # )
         # self.tokenizer.pad_token = self.tokenizer.eos_token
 
     
@@ -162,7 +157,6 @@ class GenerativeModel:
         
             reference notebook from huggingface: https://colab.research.google.com/drive/1jCkpikz0J2o20FBQmYmAGdiKmJGOMo-o?usp=sharing#scrollTo=MDqJWba-tpnv
         """
-
         # manual preparing the model to 8-bit training
         prepare = False
         if not prepare:
