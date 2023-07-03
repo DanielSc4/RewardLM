@@ -42,6 +42,7 @@ class RewardModel:
         Returns:
             int: hatefulness score
         """
+        self.model.eval()
         with torch.no_grad():
             out = self.model(**prompt)
 
