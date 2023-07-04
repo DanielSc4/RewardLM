@@ -3,6 +3,7 @@
 
 model_id: EleutherAI/gpt-neo-125m
 debug: yes                # CHANGE (prints output)
+load_from_peft: no
 
 generation:  
   custom_prompt:

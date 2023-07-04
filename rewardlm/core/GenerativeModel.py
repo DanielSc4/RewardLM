@@ -5,7 +5,7 @@ import datasets
 from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig, Trainer, TrainingArguments
 from accelerate import Accelerator
 
-from peft import LoraConfig, get_peft_model, prepare_model_for_int8_training
+from peft import LoraConfig, get_peft_model, prepare_model_for_int8_training, PeftModel
 from trl import AutoModelForCausalLMWithValueHead
 
 
@@ -100,7 +100,8 @@ class GenerativeModel:
     def __load_from_peft(self, config, load_dtype: str):
         # function to load a pretrained finetuned w/ peft model from huggingface, usign the original model and the specified configuration
         original_pretrained = AutoModelForCausalLMWithValueHead.from_pretrained(self.original_pretrained_model_id)
-        self.model = get_peft_model(model = original_pretrained, peft_config=config)
+        # self.model = get_peft_model(model = original_pretrained, peft_config=config) # BUG
+        self.model = PeftModel.from_pretrained(original_pretrained, self.model_id)
 
 
     def print_trainable_parameters(self) -> None:

@@ -2,6 +2,7 @@
 
 model_id: togethercomputer/RedPajama-INCITE-Chat-3B-v1
 debug: yes
+load_from_peft: no
 
 generation:
   custom_prompt:

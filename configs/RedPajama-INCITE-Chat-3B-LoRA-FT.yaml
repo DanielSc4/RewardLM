@@ -1,55 +1,52 @@
-# tiiuae/falcon-7b-instruct
+# togethercomputer/RedPajama-INCITE-Chat-3B-v1
 
-model_id: tiiuae/falcon-7b-instruct
+model_id: DanielSc4/RedPajama-INCITE-Chat-3B-v1-FT-LoRA-8bit-test1
 debug: yes
 load_from_peft: no
 
-generation:  
+generation:
   custom_prompt:
-    # from LLaMA
-    user_name: '### Question:'
-    bot_name: '### Answer:'
+    # from original togethercomputer doc
+    user_name: '<human>:'
+    bot_name: '<bot>:'
   generation_config:
     max_new_tokens: 70
     min_new_tokens: 4
     do_sample: yes
-    # temperature: 0.7
-    # top_p: 0.8
-    top_k: 10
+    temperature: 0.7
+    top_p: 0.8
+    top_k: 50
     no_repeat_ngram_size: 2
-  
+
 RL_args:
   reward_model_id: facebook/roberta-hate-speech-dynabench-r4-target
   PPO_config:
     learning_rate: 0.000005
-    log_with: wandb       # CHANGE w/ wandb
-    mini_batch_size: 4   # (default: 16) mini batch size (<= batch size) for each model forward pass 
-    batch_size: 64       # (default: 256) batch size used for each optimization step (general bs)
+    log_with: wandb        # CHANGE w/ wandb
+    mini_batch_size: 8    # (16) mini batch size (<= batch size) for each model forward pass 
+    batch_size: 64        # (256) batch size used for each optimization step
     gradient_accumulation_steps: 2
 
 LoRA_config:
   r: 32                   # the rank of the update matrices. Lower -> fewer trainable params
   lora_alpha: 32          # LoRA scaling factor
   target_modules:
-    - "query_key_value"
-    - "dense"
-    - "dense_h_to_4h"
-    - "dense_4h_to_h"
+    - "query_key_value"   # (query_key_value): Linear(in_features=4096, out_features=12288, bias=True)
   lora_dropout: 0.05      # 
   bias: 'none'            # if the bias parameters should be trained ['none', 'lora_only', 'all']
   task_type: 'CAUSAL_LM'  # task
 
 fine_tune_args:
-  per_device_train_batch_size: 16
+  per_device_eval_batch_size: 32
   per_device_eval_batch_size: 4
   eval_accumulation_steps: 5
   gradient_accumulation_steps: 2
   warmup_steps: 100
-  num_train_epochs: 3
+  num_train_epochs: 4
   learning_rate: 0.0003
   optim: 'adamw_torch'
   save_strategy: "steps"
-  save_steps: 150
+  save_steps: 200
   auto_find_batch_size: yes
   use_mps_device: no
   logging_strategy: 'steps'
