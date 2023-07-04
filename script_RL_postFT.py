@@ -17,7 +17,7 @@ from trl import (
 )
 set_seed(42)
 
-from transformers import AutoTokenizer, DataCollatorForSeq2Seq
+from transformers import AutoTokenizer, AutoModelForCausalLM, DataCollatorForSeq2Seq
 from datasets import Dataset
 from peft import LoraConfig, PeftModel
 from tqdm import tqdm
@@ -109,7 +109,7 @@ def main(config_name: str,):
         print(f'[-] CUDA detected, downloading {config["model_id"]} model in 8-bit mode')
         repo_id = 'DanielSc4/' + config['model_id'].split('/')[1] + '-RL-LoRA-8bit-postFT'
         if load_from_peft:
-            model = AutoModelForCausalLMWithValueHead.from_pretrained(      # downloads original pretrained model
+            model = AutoModelForCausalLM.from_pretrained(      # downloads original pretrained model
                 original_pretrained_model_id, 
                 # return_dict=True, 
                 load_in_8bit=True, 
@@ -117,6 +117,7 @@ def main(config_name: str,):
                 trust_remote_code=True,
             )
             model = PeftModel.from_pretrained(model, config['model_id'])    # downloads and apply adapters to the pretrained model
+            model = AutoModelForCausalLMWithValueHead.from_pretrained(model)    # wrap model
         else:
             model = AutoModelForCausalLMWithValueHead.from_pretrained(      # downloads original pretrained model
                 config['model_id'],
@@ -129,11 +130,12 @@ def main(config_name: str,):
         print(f'[-] No CUDA detected, downloading {config["model_id"]} model, fp32')
         repo_id = 'DanielSc4/' + config['model_id'].split('/')[1] + '-RL-LoRA-postFT'
         if load_from_peft:
-            model = AutoModelForCausalLMWithValueHead.from_pretrained(      # downloads original pretrained model
+            model = AutoModelForCausalLM.from_pretrained(      # downloads original pretrained model
                 original_pretrained_model_id,
                 trust_remote_code=True,
             )
             model = PeftModel.from_pretrained(model, config['model_id'])    # downloads and apply adapters to the pretrained model
+            model = AutoModelForCausalLMWithValueHead.from_pretrained(model)    # wrap model
         else:
             model = AutoModelForCausalLMWithValueHead.from_pretrained(      # downloads original pretrained model
                 config['model_id'],
