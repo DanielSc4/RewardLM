@@ -2,7 +2,7 @@
 
 model_id: DanielSc4/RedPajama-INCITE-Chat-3B-v1-FT-LoRA-8bit-test1
 debug: yes
-load_from_peft: no
+load_from_peft: yes
 
 generation:
   custom_prompt:

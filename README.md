@@ -11,7 +11,7 @@ Reward a Language Model with pancakes 🥞
 - [ ] Compatibility of ⚖️ ToxicityMeter with other datasets (possibly instructional).
 - [ ] Extend ⚖️ ToxicityMeter compatibility with 🤗 Accelerate.
 - [x] Extend the possibility of managing parameters and configurations to 🥞RLAF.
-- [ ] Use of [Inseq](https://github.com/inseq-team/inseq) for analysis and interpretability of generative models at ⚖️ ToxicityMeter.
+- [x] Use of [Inseq](https://github.com/inseq-team/inseq) for analysis and interpretability of generative models at ⚖️ ToxicityMeter.
 
 
 ## **Usage**
