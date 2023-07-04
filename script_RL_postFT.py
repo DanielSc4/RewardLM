@@ -71,7 +71,7 @@ def gpu_usage():
     if torch.cuda.is_available():
         return [e/1024/1024/1024 for e in torch.cuda.mem_get_info()]
     else:
-        'ERR: no cuda GPU detected'
+        return 'ERR: no cuda GPU detected'
 
 def main(config_name: str,):
     print(now)
@@ -148,7 +148,7 @@ def main(config_name: str,):
         tokenizer = AutoTokenizer.from_pretrained(config['model_id'])
     tokenizer.padding_side = "left"  # Allow batched inference
     if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token      # unk. we want this to be different from the eos token
+        tokenizer.pad_token = tokenizer.eos_token      # unk. we want this to be different from the eos token (if set to 0)
 
     print_trainable_parameters(model=model)
 
