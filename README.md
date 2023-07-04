@@ -171,6 +171,8 @@ toxicity_df.to_csv(
 
 - `Pythia`: *Predominantly abandoned in favour of instructed models.* Model(s) that combines interpretability analysis and scaling laws to understand how knowledge develops and evolves during training in autoregressive transformers. [GitHub](https://github.com/EleutherAI/pythia), [Paper](https://arxiv.org/pdf/2304.01373.pdf)
 
+- `Falcon-*-isntruct`: Causal decoder-only model built by TII and trained on 1,500B tokens of RefinedWeb enhanced with curated corpora. [Source](https://huggingface.co/blog/falcon), [Source istructed 7B model](tiiuae/falcon-7b-instruct).
+
 #### **Datasets:**
 - `Real Toxicity Prompts`: Mainly used for the ⚖️ `ToxicityMeter` module. Dataset of 100K naturally occurring, sentence-level prompts derived from a large corpus of English web text, paired with toxicity scores from a widely-used toxicity classifier. [GitHub](https://github.com/allenai/real-toxicity-prompts), [Paper](https://www.semanticscholar.org/paper/RealToxicityPrompts%3A-Evaluating-Neural-Toxic-in-Gehman-Gururangan/399e7d8129c60818ee208f236c8dda17e876d21f)
 
