@@ -12,9 +12,9 @@ generation:
     max_new_tokens: 70
     min_new_tokens: 4
     do_sample: yes
-    temperature: 0.7
-    top_p: 0.8
-    top_k: 50
+    # temperature: 0.7
+    # top_p: 0.8
+    top_k: 10
     no_repeat_ngram_size: 2
   
 RL_args:
