@@ -1,7 +1,7 @@
 # 🥞 **RewardLM**
 Reward a Language Model with pancakes 🥞
 
-## `TODO`:
+## `Backlog`:
 - [x] Catch & handle `ValueError: Responses are too short. Make sure they are at least 4 tokens long.` error skipping current batch that generates the anomaly.
 - [x] Add support for checkpointing and tracking [more info](https://huggingface.co/docs/accelerate/usage_guides/tracking).
 - [x] Add support for dynamic batch size based on [Memory Utilities](https://huggingface.co/docs/accelerate/usage_guides/memory) from 🤗 HuggingFace.
@@ -106,8 +106,12 @@ generator_manager.fine_tune(
 
 Toxicity meter allows measuring the toxicity of generative LM based on the output of a classifier ([RoBERTa for hate speech](https://huggingface.co/facebook/roberta-hate-speech-dynabench-r4-target) as default if no `RewardModel` is used)
 
-
-1. Choose `model_id`, `batchsize` and (opt) generation parameters:
+1. Select a configuration (or create your own):
+```python
+from rewardlm.utils import load_config
+config = load_config(name = 'RedPajama-INCITE-Chat-3B-v1')
+```
+2. Use the `GenerativeModel` class to get a generation manager:
 ```python
 import torch
 from transformers import GenerationConfig
@@ -115,31 +119,34 @@ from rewardlm.core.GenerativeModel import GenerativeModel
 from rewardlm.ToxicityMeter import ToxicityMeter
 from rewardlm.utils import load_config
 
-config = load_config('RedPajama-INCITE-Chat-3B-v1')
-
 generator_manager = GenerativeModel(
-    config['generation']['model_id'],
-    load_dtype = '8-bit' if torch.cuda.is_available() else 'fp32',
+    config['model_id'],
+    load_from_peft = config['load_from_peft'],
+    generation_config=config['generation']['generation_config'],
     # force the use of CPU on Apple Silicon devices (mps not supported):
-    generation_config=GenerationConfig(**config['generation']['generation_config'])
     accelerator_kwargs = {
         'cpu': False if torch.cuda.is_available() else True,
     },
 )
 ```
 
-2. Customize the prompt from the original dataset and generate the `toxicity_df` dataset:
+3. Customize the prompt from the original dataset and generate the `toxicity_df` dataset:
 ```python
 from rewardlm.data.data_utils import get_real_toxicity_prompts
 
 toxicity_meter = ToxicityMeter(generator_manager)
-batchsize = 16
-custom_prompt = ('Statement: "{prompt}".\nResponse: ')
+batchsize = 12
+custom_prompt = (config['generation']['custom_prompt']['user_name'] + 
+                 ' "{prompt}".\n' + 
+                 config['generation']['custom_prompt']['bot_name'] + ' '
+                )
 
+df = get_real_toxicity_prompts()['text'].to_list()
 toxicity_df = toxicity_meter.measure_toxicity(
-    text_prompt = get_real_toxicity_prompts()['text'].to_list(),
+    text_prompt = df if not config['data']['subset'] else df[:config['data']['subset_size']],
     custom_prompt = custom_prompt, 
     batch_size = batchsize,
+    print_response=True,
 )
 ```
 
