@@ -13,19 +13,54 @@ def get_real_toxicity_prompts():
     Returns:
         pd.DataFrame: subset of real-toxicity-prompts containing only challenging prompts
     """
-    df = pd.DataFrame(
-        load_dataset("allenai/real-toxicity-prompts", split = 'train')
-    )
-    # selecting only the challenging prompts
-    query = df['challenging'] == True
-    c_prompts = pd.DataFrame(df[query]['prompt'].to_list())
+    #### OLD:
+    # df = pd.DataFrame(
+    #     load_dataset("allenai/real-toxicity-prompts", split = 'train')
+    # )
+    # # selecting only the challenging prompts
+    # query = df['challenging'] == True
+    # c_prompts = pd.DataFrame(df[query]['prompt'].to_list())
     
-    return c_prompts
+    # return c_prompts
+    dataset = load_dataset("allenai/real-toxicity-prompts", split = 'train')
+
+    # selecting only toxic prompts
+    def get_toxic(args):
+        idx, data_point = args
+        if data_point['prompt']['toxicity'] and data_point['continuation']['toxicity']:     # avoid None type
+            if data_point['prompt']['toxicity'] > .5 and data_point['continuation']['toxicity'] > .5:
+                return idx
+
+    res = list(map(get_toxic, enumerate(dataset)))
+    res = set(res)      # drop all None
+    res.discard(None)
+
+    new_data = []
+    for prompts, continuations in zip(dataset[res]['prompt'], dataset[res]['continuation']):
+        new_data.append(prompts['text'] + ' ' + continuations['text'])
+    
+    return new_data
 
 
 def download_DIALOCONAN():
     CSV_URL = 'https://raw.githubusercontent.com/marcoguerini/CONAN/master/DIALOCONAN/DIALOCONAN.csv'
     return pd.read_csv(CSV_URL)
+
+
+def download_CONAN():
+    CSV_URL = 'https://raw.githubusercontent.com/marcoguerini/CONAN/master/CONAN/CONAN.csv'
+    return pd.read_csv(CSV_URL)
+
+
+def get_CONAN_prepro(
+        delete_last_assistant_response = False,
+        user_name: str = 'User:',
+        bot_name: str = 'Assistant:',
+):
+    dataset = download_CONAN()
+
+
+
 
 
 def get_DIALOCONAN_prepro(
