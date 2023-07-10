@@ -84,4 +84,9 @@ tests/wandb/*
 
 # all files named __old*
 **/_old*
+
+# credentials
 credentials.yaml
+
+# old notebooks folder
+notebooks/*
