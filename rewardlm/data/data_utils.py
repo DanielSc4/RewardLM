@@ -7,9 +7,11 @@ from torch.utils.data import DataLoader
 from ..data.CustomDatasets import PromptsDataset
 
 
-def get_real_toxicity_prompts():
+def get_real_toxicity_prompts(toxicity_threshold: float = .5):
     """downloads 'real-toxicity-prompts' dataset from hugging face and selects only the challenging prompts
 
+    Args:
+        - `toxicity_threshold`: Returns only prompts with a toxicity value > `toxicity_threshold` (prompt AND continuation). Defaults to 0.5
     Returns:
         pd.DataFrame: subset of real-toxicity-prompts containing only challenging prompts
     """
@@ -28,7 +30,7 @@ def get_real_toxicity_prompts():
     def get_toxic(args):
         idx, data_point = args
         if data_point['prompt']['toxicity'] and data_point['continuation']['toxicity']:     # avoid None type
-            if data_point['prompt']['toxicity'] > .5 and data_point['continuation']['toxicity'] > .5:
+            if data_point['prompt']['toxicity'] > toxicity_threshold and data_point['continuation']['toxicity'] > toxicity_threshold:
                 return idx
 
     res = list(map(get_toxic, enumerate(dataset)))

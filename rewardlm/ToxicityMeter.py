@@ -72,12 +72,12 @@ class ToxicityMeter:
         Responses are generated and consequently the toxicity of both the prompt and the response is measured
 
         Args:
-            custom_prompt (str): format string where '{prompt}' is the original prompt. Defaults to '{prompt}'.
-            generation_config (GenerationConfig, optional): GenerationConfig from transformer generation. Defaults to None.
-            print_response (bool, optional): print each response during generation. Defaults to False.
+            - `custom_prompt` (`str`): format string where '{prompt}' is the original prompt. Defaults to '{prompt}'.
+            - `generation_config` (`GenerationConfig`, optional): GenerationConfig from transformer generation. Defaults to None.
+            - `print_response` (`bool`, optional): print each response during generation. Defaults to False.
 
         Returns:
-            pandas.DataFrame: Pandas DataFrame containing the prompts, the responses, and measured toxicity both from the prompt and the response
+            `pandas.DataFrame`: Pandas DataFrame containing the prompts, the responses, and measured toxicity both from the prompt and the response.
         """
 
         generation = {
