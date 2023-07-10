@@ -6,10 +6,10 @@ class PromptsDataset(Dataset):
         """Dataset returning a tokenized prompt w/ left padding
 
         Args:
-            tokenizer (_type_): tokenizer of the generative model
-            text (list[str]): List of strings (prompts)
-            max_len (int, optional): max lenght for the tokenizer. Defaults to 256.
-            custom_prompt (str, optional): format string containing '{prompt}' to modify the original prompt. Defaults to '{prompt}'.
+            - `tokenizer` (`*Tokenizer`): tokenizer of the generative model
+            - `text` (`list[str]`): List of strings (prompts)
+            - `max_len` (`int`, optional): max lenght for the tokenizer. Defaults to 256.
+            - `custom_prompt` (`str`, optional): format string containing '{prompt}' to modify the original prompt. Defaults to '{prompt}'.
         """
         assert '{prompt}' in custom_prompt
 
@@ -83,6 +83,12 @@ class ToxicityGeneratedSet(Dataset):
     """PyTorch dataset used to measure toxicity on both the prompt and the response of a model. 
     Tokenizes both input and responses (using the reward model tokenizer) and returns the index with
     the tokenized prompt and response
+
+    Args:
+        - `prompts` (`list[str]`): List of prompts
+        - `responses` (`list[str]`): List of model response to each prompt
+        - `tokenizer` (`*Tokenizer`): Reward model tokenizer
+        - `max_len` (`int`, optional): Tokenizer max length. Defaults to 512.
 
     """
     def __init__(self, prompts, responses, tokenizer, max_len = 512):

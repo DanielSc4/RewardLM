@@ -13,7 +13,7 @@ def get_real_toxicity_prompts(toxicity_threshold: float = .5):
     Args:
         - `toxicity_threshold`: Returns only prompts with a toxicity value > `toxicity_threshold` (prompt AND continuation). Defaults to 0.5
     Returns:
-        pd.DataFrame: subset of real-toxicity-prompts containing only challenging prompts
+        `list[str]`: subset of real-toxicity-prompts containing only challenging prompts
     """
     #### OLD:
     # df = pd.DataFrame(
@@ -73,10 +73,10 @@ def get_DIALOCONAN_prepro(
     """Download DIALOCONAN dataset and adapt it to fine-tuning process
 
     Args:
-        return_text_only (bool, optional): if False return (dict) having dialog_id as id. True returns a list of text. Defaults to True.
+        - `return_text_only` (`bool`, optional): if False return (dict) having dialog_id as id. True returns a list of text. Defaults to True.
 
     Returns:
-        dict | list: check return_text_only arg
+        `dict` | `list`: check `return_text_only` arg
     """
 
     dataset = download_DIALOCONAN()

@@ -115,7 +115,7 @@ class ToxicityMeter:
         gen_tox_df = pd.DataFrame.from_dict(generation)
         model_tox_set = ToxicityGeneratedSet(
             prompts = gen_tox_df['prompts'].to_list(),
-            responses = gen_tox_df['prompts'].to_list(),
+            responses = gen_tox_df['responses'].to_list(),
             tokenizer = self.reward_manager.tokenizer, 
             max_len = 128,
         )
@@ -127,6 +127,8 @@ class ToxicityMeter:
 
         result_tox = self.reward_manager.get_batch_score_pair(model_tox_loader)
         # adding toxicity scores
+        # DEBUG:
+        print(result_tox)
         toxicity_df = gen_tox_df.join(pd.DataFrame.from_dict(result_tox))
 
         return toxicity_df
