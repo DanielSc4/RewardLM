@@ -141,11 +141,11 @@ custom_prompt = (config['generation']['custom_prompt']['user_name'] +
                  config['generation']['custom_prompt']['bot_name'] + ' '
                 )
 
-df = get_real_toxicity_prompts()['text'].to_list()
+df = get_real_toxicity_prompts()
 toxicity_df = toxicity_meter.measure_toxicity(
     text_prompt = df if not config['data']['subset'] else df[:config['data']['subset_size']],
-    custom_prompt = custom_prompt, 
-    batch_size = batchsize,
+    custom_prompt=custom_prompt, 
+    batch_size=batchsize,
     print_response=True,
 )
 ```
