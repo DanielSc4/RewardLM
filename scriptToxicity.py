@@ -1,4 +1,3 @@
-
 import torch
 from rewardlm.core.GenerativeModel import GenerativeModel
 from rewardlm.ToxicityMeter import ToxicityMeter
@@ -40,10 +39,10 @@ def main(config_name: str):
         batch_size=config['inference_batch_size'],
         print_response=config['debug'],     # print responses
     )
-    
+
     # save csv in tmp folder
     fldr = './result analysis/new_prompts'
-    toxicity_df.to_csv(fldr + f'/measured_tox_{config["model_id"].split("/")[-1]}.csv')
+    toxicity_df.to_csv(fldr + f'/measured_tox_{config["model_label"]}_{config["model_id"].split("/")[-1]}.csv')
 
 
 

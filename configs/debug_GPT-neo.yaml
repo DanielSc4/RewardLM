@@ -5,6 +5,7 @@ model_id: EleutherAI/gpt-neo-125m
 debug: yes                # CHANGE (prints output)
 load_from_peft: no
 inference_batch_size: 8
+model_label: 'PT'   # pretrained
 
 generation:  
   custom_prompt:

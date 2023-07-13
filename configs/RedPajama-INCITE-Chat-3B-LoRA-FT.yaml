@@ -4,6 +4,7 @@ model_id: DanielSc4/RedPajama-INCITE-Chat-3B-v1-FT-LoRA-8bit-test1
 debug: yes
 load_from_peft: yes
 inference_batch_size: 32
+model_label: 'FT'   # fine-tuned
 
 generation:
   custom_prompt:

@@ -1,10 +1,10 @@
 # togethercomputer/RedPajama-INCITE-Chat-3B-v1
 
-model_id: togethercomputer/RedPajama-INCITE-Chat-3B-v1
+model_id: DanielSc4/RedPajama-INCITE-Chat-3B-v1-RL-LoRA-8bit-test1
 debug: yes
-load_from_peft: no
+load_from_peft: yes
 inference_batch_size: 32
-model_label: 'PT'   # pretrained
+model_label: 'RL'   # reinforcement learning
 
 generation:
   custom_prompt:
