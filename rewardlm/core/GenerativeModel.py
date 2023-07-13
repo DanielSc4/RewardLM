@@ -59,7 +59,7 @@ class GenerativeModel:
             config = LoraConfig.from_pretrained(self.model_id)
             self.original_pretrained_model_id = config.base_model_name_or_path
             print(f'Obtaining original model: {self.original_pretrained_model_id}')
-            self.__load_from_peft(config, load_dtype)
+            self.__load_from_peft(self.original_pretrained_model_id, load_dtype)
         else:
             self.original_pretrained_model_id = self.model_id
             if load_dtype == '8-bit':
@@ -83,13 +83,10 @@ class GenerativeModel:
                 print(f'Model loaded in fp32 (standard) mode')
 
         # tokenizer
-        if load_from_peft:
-            self.tokenizer = AutoTokenizer.from_pretrained(
-                self.original_pretrained_model_id, 
-                # use_fast = False,
-            )
-        else:
-            self.tokenizer = AutoTokenizer.from_pretrained(model_id)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            self.original_pretrained_model_id, 
+            # use_fast = False,
+        )
         self.tokenizer.padding_side = "left"        # Allow batched inference
         # self.tokenizer.pad_token_id = (
         #     0  # unk. we want this to be different from the eos token
@@ -97,11 +94,15 @@ class GenerativeModel:
         # self.tokenizer.pad_token = self.tokenizer.eos_token
 
     
-    def __load_from_peft(self, config, load_dtype: str):
-        # function to load a pretrained finetuned w/ peft model from huggingface, usign the original model and the specified configuration
-        original_pretrained = AutoModelForCausalLMWithValueHead.from_pretrained(self.original_pretrained_model_id)
-        # self.model = get_peft_model(model = original_pretrained, peft_config=config) # BUG
-        self.model = PeftModel.from_pretrained(original_pretrained, self.model_id)
+    def __load_from_peft(self, original_pretrained_id, load_dtype: str):
+        bit8 = load_dtype == '8-bit'
+        base_model = AutoModelForCausalLM.from_pretrained(
+            original_pretrained_id, 
+            load_in_8bit = bit8,
+            trust_remote_code=True,
+            device_map="auto" if torch.cuda.is_available() else 'cpu',
+        )
+        self.model = PeftModel.from_pretrained(base_model, self.model_id)
 
 
     def print_trainable_parameters(self) -> None:
