@@ -19,6 +19,7 @@ class GenerativeModel:
             self, 
             model_id: str, 
             load_from_peft: bool = False, 
+            merged: bool = False,
             device: str = None, 
             load_dtype: str = 'fp32', 
             generation_config: GenerationConfig = None, 
@@ -59,7 +60,7 @@ class GenerativeModel:
             config = LoraConfig.from_pretrained(self.model_id)
             self.original_pretrained_model_id = config.base_model_name_or_path
             print(f'Obtaining original model: {self.original_pretrained_model_id}')
-            self.__load_from_peft(self.original_pretrained_model_id, load_dtype)
+            self.__load_from_peft(self.original_pretrained_model_id, load_dtype, merged)
         else:
             self.original_pretrained_model_id = self.model_id
             if load_dtype == '8-bit':
@@ -94,7 +95,7 @@ class GenerativeModel:
         # self.tokenizer.pad_token = self.tokenizer.eos_token
 
     
-    def __load_from_peft(self, original_pretrained_id, load_dtype: str):
+    def __load_from_peft(self, original_pretrained_id, load_dtype: str, merged: bool):
         bit8 = load_dtype == '8-bit'
         base_model = AutoModelForCausalLM.from_pretrained(
             original_pretrained_id, 
@@ -103,6 +104,8 @@ class GenerativeModel:
             device_map="auto" if torch.cuda.is_available() else 'cpu',
         )
         self.model = PeftModel.from_pretrained(base_model, self.model_id)
+        if merged:
+            self.model = self.model.merge_and_unload()
 
 
     def print_trainable_parameters(self) -> None:
