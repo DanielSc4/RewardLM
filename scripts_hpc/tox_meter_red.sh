@@ -29,9 +29,12 @@ export PATH_TO_STORAGE=/scratch/p313544/storage_cache/ret_toxicity
 
 
 cd $PATH_TO_PRJ
-echo "Executing 3 python script... (PT)"
+echo "Executing 3 python script..."
+echo "[PT]"
 python $SCRIPT_NAME -c RedPajama-INCITE-Chat-3B-v1
+echo "[FT]"
 python $SCRIPT_NAME -c RedPajama-INCITE-Chat-3B-LoRA-FT
+echo "[RL]"
 python $SCRIPT_NAME -c RedPajama-INCITE-Chat-3B-LoRA-RL
 
 

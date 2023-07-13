@@ -19,6 +19,7 @@ def main(config_name: str):
         config['model_id'],
         load_from_peft=config['load_from_peft'],
         generation_config=config['generation']['generation_config'],
+        load_dtype = '8-bit' if torch.cuda.is_available() else 'fp32',
         accelerator_kwargs = {
             'cpu': False if torch.cuda.is_available() else True,
         },
