@@ -177,7 +177,7 @@ def main(config_name: str):
 
 
 if __name__ == '__main__':
-    parser = ArgumentParser(description='Process some integers.')
+    parser = ArgumentParser(description='Get config file.')
     parser.add_argument('-c', '--config', required = True, help = 'Config name (without the .yaml). Files are stored in PROJ_PATH/configs/*.yaml')
 
     args = parser.parse_args()

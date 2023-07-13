@@ -106,6 +106,8 @@ class GenerativeModel:
         self.model = PeftModel.from_pretrained(base_model, self.model_id)
         if merged:
             self.model = self.model.merge_and_unload()
+        # print summary of parameters
+        self.print_trainable_parameters()
 
 
     def print_trainable_parameters(self) -> None:
