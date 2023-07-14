@@ -9,7 +9,8 @@ from argparse import ArgumentParser
 
 ATTRIBUTE = 'TOXICITY'
 NAME_NEW_COL = 'pro_API_response_score'
-TIME_INTERVAL = .4
+TIME_INTERVAL = .95      # prospective API limit the QPS (query per second) to 1
+# https://console.cloud.google.com/iam-admin/quotas to check quota alerts
 
 
 def read_credential():
