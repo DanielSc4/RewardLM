@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=tox_meter_falcon
-#SBATCH --time=04:30:00
+#SBATCH --time=06:00:00
 #SBATCH --mem=30GB
 #SBATCH --gpus-per-node=a100:1
 #SBATCH --output=/home1/p313544/slurm_logs/%x.%j.out
@@ -30,8 +30,8 @@ export PATH_TO_STORAGE=/scratch/p313544/storage_cache/ret_toxicity
 
 cd $PATH_TO_PRJ
 echo "Executing 3 python script..."
-echo "[PT]"
-python $SCRIPT_NAME -c falcon7B
+# echo "[PT]"
+# python $SCRIPT_NAME -c falcon7B
 echo "[FT]"
 python $SCRIPT_NAME -c falcon7b-FT
 echo "[RL]"
