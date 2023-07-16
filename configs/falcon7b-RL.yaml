@@ -3,7 +3,7 @@
 model_id: DanielSc4/falcon-7b-instruct-RL-LoRA-8bit-test1
 debug: yes
 load_from_peft: yes
-inference_batch_size: 64
+inference_batch_size: 80
 model_label: 'RL'   # reinforcement learning
 
 generation:
