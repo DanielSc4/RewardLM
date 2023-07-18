@@ -8,8 +8,9 @@ from argparse import ArgumentParser
 
 ATTRIBUTE = 'TOXICITY'
 NAME_NEW_COL = 'pro_API_response_score'
-TIME_INTERVAL = 0.7      # prospective API limit the QPS (query per second) to 1 # https://console.cloud.google.com/iam-admin/quotas to check quota alerts
-TRIALS = 2      # number of times to iterate on the entire dataset
+TIME_INTERVAL = 0.8      # prospective API limit the QPS (query per second) to 1 # https://console.cloud.google.com/iam-admin/quotas to check quota alerts
+TRIALS = 4      # number of times to iterate on the entire dataset
+BACKUP_EVERY = 25
 
 
 def read_credential():
@@ -77,9 +78,9 @@ def main(path_to_df):
                 break
             
             # backup, overwrite
-            if it % 100 == 0:
+            if it % BACKUP_EVERY == 0:
                 df.to_csv(path_to_df)
-                pbar.set_description(f"status: {get_status(df)} | from last backup: {n_response} | last_backup: {it}it")
+                pbar.set_description(f"status: {get_status(df)} | from last backup: {n_response}/{BACKUP_EVERY} | last_backup: {it}it")
                 n_response = 0
 
 

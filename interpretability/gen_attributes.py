@@ -51,6 +51,8 @@ def select_prompts():
     # tmp:
     return ['hello world', 'this is a test']
 
+
+
 def main(config, args):
     model = load_model(config['model_id'], config['load_from_peft'])
     
@@ -68,13 +70,8 @@ def main(config, args):
         generation_args = config['generation']['generation_config'],
     )
     
-    print(f'[x] len out: {len(out)}')
-    print('Attributes:')
-    print(out.__dict__)
-    print('Methods')
-    print(out.__dict__)
-    print('first element:')
-    print(out[0])
+    print('[x] Saving attributes')
+    out.save('attributes_{model_name}.json'.format(model_name = config['model_id'].split('/')[-1]))
     
 
 
