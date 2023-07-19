@@ -8,7 +8,7 @@ from argparse import ArgumentParser
 
 ATTRIBUTE = 'TOXICITY'
 NAME_NEW_COL = 'pro_API_response_score'
-TIME_INTERVAL = 0.8      # prospective API limit the QPS (query per second) to 1 # https://console.cloud.google.com/iam-admin/quotas to check quota alerts
+TIME_INTERVAL = .8      # prospective API limit the QPS (query per second) to 1 # https://console.cloud.google.com/iam-admin/quotas to check quota alerts
 TRIALS = 4      # number of times to iterate on the entire dataset
 BACKUP_EVERY = 25
 
