@@ -68,10 +68,11 @@ def main(config, args):
         prompts,
         step_scores=["probability"],
         generation_args = config['generation']['generation_config'],
+        batch_size = config['inference_batch_size'],
     )
     
     print('[x] Saving attributes')
-    out.save('attributes_{model_name}.json'.format(model_name = config['model_id'].split('/')[-1]))
+    out.save(args.output_path + 'attributes_{model_name}.json'.format(model_name = config['model_id'].split('/')[-1]))
     
 
 
@@ -94,12 +95,11 @@ if __name__ == '__main__':
         help='Attribuition method used for inseq',
         default='input_x_gradient',
     )
-
     parser.add_argument(
-        '-a', '--attribution_method', 
+        '-o', '--output_path', 
         required=False, 
         help='Attribuition method used for inseq',
-        default='input_x_gradient',
+        default='./results/interp_res/',
     )
 
     args = parser.parse_args()
