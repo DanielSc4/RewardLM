@@ -58,7 +58,7 @@ def main(config, args):
     
     # load in inseq
     seq_model = inseq.load_model(
-        'gpt2', # model,
+        model, # model,
         attribution_method=args.attribution_method
     )
 
@@ -94,6 +94,14 @@ if __name__ == '__main__':
         help='Attribuition method used for inseq',
         default='input_x_gradient',
     )
+
+    parser.add_argument(
+        '-a', '--attribution_method', 
+        required=False, 
+        help='Attribuition method used for inseq',
+        default='input_x_gradient',
+    )
+
     args = parser.parse_args()
 
     config = read_config(args.config)
