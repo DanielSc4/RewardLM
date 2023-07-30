@@ -5,11 +5,20 @@ from peft import LoraConfig, PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import inseq
 
+import pandas as pd
 import os
 # disable welcome message
 os.environ['BITSANDBYTES_NOWELCOME'] = '1'
 
 
+DATASETS_PATHS = {
+    'tiiuae/falcon-7b-instruct': 'results/new_prompts/measured_tox_PT_falcon-7b-instruct.csv',      # PT
+    'DanielSc4/falcon-7b-instruct-FT-LoRA-8bit-test1': 'results/new_prompts/measured_tox_FT_falcon-7b-instruct-FT-LoRA-8bit-test1.csv',     # FT
+    'DanielSc4/falcon-7b-instruct-RL-LoRA-8bit-test1': 'results/new_prompts/measured_tox_RL_falcon-7b-instruct-RL-LoRA-8bit-test1.csv',     # RL
+    'togethercomputer/RedPajama-INCITE-Chat-3B-v1': 'results/new_prompts/measured_tox_PT_RedPajama-INCITE-Chat-3B-v1.csv',      # PT
+    'DanielSc4/RedPajama-INCITE-Chat-3B-v1-FT-LoRA-8bit-test1': 'results/new_prompts/measured_tox_FT_RedPajama-INCITE-Chat-3B-v1-FT-LoRA-8bit-test1.csv',       # FT
+    'DanielSc4/RedPajama-INCITE-Chat-3B-v1-RL-LoRA-8bit-test1': 'results/new_prompts/measured_tox_RL_RedPajama-INCITE-Chat-3B-v1-RL-LoRA-8bit-test1.csv',       # RL
+}
 
 
 def read_config(config_path):
@@ -45,11 +54,27 @@ def load_model(model_id: str, load_from_peft: bool):
 
 
 
-def select_prompts():
-    # how to do?
+def select_prompts(config):
+    df = pd.read_csv(DATASETS_PATHS[config['model_id']], index_col = 0)
+    
+    # if dubug on subset is active
+    if config['data']['subset']:
+        df = df.head(config['data']['subset_size'])
 
-    # tmp:
-    return ['hello world', 'this is a test']
+    output = {
+        'input_texts': df['prompts'].to_list(),
+        'generated_texts': [],
+    }
+    respones = df['responses'].to_list()
+    
+    output['generated_texts'] = list(map(
+        lambda prompt, respo: prompt + respo, 
+        output['input_texts'], 
+        respones,
+        )
+    )
+
+    return output
 
 
 
@@ -62,19 +87,19 @@ def main(config, args):
         attribution_method=args.attribution_method
     )
 
-    prompts = select_prompts()
-
     out = seq_model.attribute(
-        prompts,
+        **select_prompts(config),
         step_scores=["probability"],
         generation_args = config['generation']['generation_config'],
         batch_size = config['inference_batch_size'],
     )
     
+    print(out.show())
     print('[x] Saving attributes')
-    out.save(args.output_path + 'attributes_{model_name}.json'.format(model_name = config['model_id'].split('/')[-1]))
-    
-
+    out.save(
+        args.output_path + 'attributes_{model_name}.json'.format(model_name = config['model_id'].split('/')[-1]),
+        overwrite=True,    
+    )
 
 
 
