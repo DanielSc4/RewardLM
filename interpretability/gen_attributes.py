@@ -7,7 +7,7 @@ import os
 os.environ['BITSANDBYTES_NOWELCOME'] = '1'
 
 from peft import LoraConfig, PeftModel
-from transformers import AutoModelForCausalLM
+from transformers import AutoModelForCausalLM, AutoTokenizer
 import inseq
 
 import pandas as pd
@@ -53,7 +53,14 @@ def load_model(model_id: str, load_from_peft: bool):
         original_pretrained = model_id
         model = download_model(original_pretrained)
     
-    return model
+    tokenizer = AutoTokenizer.from_pretrained(original_pretrained)
+    if tokenizer.pad_token_id is None:
+        tokenizer.pad_token_id = tokenizer.eos_token_id
+        tokenizer.pad_token = tokenizer.pad_token
+    if tokenizer.bos_token_id is None:
+        tokenizer.bos_token_id = tokenizer.eos_token_id
+
+    return model, tokenizer
 
 
 
@@ -71,7 +78,7 @@ def select_prompts(config):
     respones = df['responses'].to_list()
     
     output['generated_texts'] = list(map(
-        lambda prompt, respo: prompt + respo, 
+        lambda prompt, respo: str(prompt) + str(respo), 
         output['input_texts'], 
         respones,
         )
@@ -82,12 +89,13 @@ def select_prompts(config):
 
 
 def main(config, args):
-    model = load_model(config['model_id'], config['load_from_peft'])
-    
+    model, tokenizer = load_model(config['model_id'], config['load_from_peft'])
+
     # load in inseq
     seq_model = inseq.load_model(
         model, # model,
-        attribution_method=args.attribution_method
+        attribution_method=args.attribution_method,
+        tokenizer=tokenizer,
     )
 
     inputs = select_prompts(config)
