@@ -69,7 +69,7 @@ def select_prompts(config):
     
     # if dubug on subset is active
     if config['data']['subset']:
-        df = df.head(config['data']['subset_size'])
+        df = df.head(3)#config['data']['subset_size'])
 
     output = {
         'input_texts': df['prompts'].to_list(),
@@ -109,17 +109,20 @@ def main(config, args):
         step_scores=["probability"],
         generation_args = config['generation']['generation_config'],
         batch_size = config['inference_batch_size'],
+        show_progress = True,      # decluttering logs
+        pretty_progress = False,
     )
     
-    print(out.show())
+    print(len(out))
+    print(type(out))
+    print(out)
+    
     print('[x] Saving attributes')
     out.save(
         args.output_path + 'attributes_{model_name}.json'.format(model_name = config['model_id'].split('/')[-1]),
         overwrite=True,    
     )
-
-
-
+    print('[x] Done')
 
 
 if __name__ == '__main__':
