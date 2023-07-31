@@ -69,7 +69,7 @@ def select_prompts(config):
     
     # if dubug on subset is active
     if config['data']['subset']:
-        df = df.head(3)#config['data']['subset_size'])
+        df = df.head(config['data']['subset_size'])
 
     output = {
         'input_texts': df['prompts'].to_list(),
