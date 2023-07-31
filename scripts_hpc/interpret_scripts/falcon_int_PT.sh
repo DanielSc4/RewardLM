@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --job-name=interpret_falcon
-#SBATCH --time=03:00:00
+#SBATCH --job-name=falcon_int_PT
+#SBATCH --time=18:00:00
 #SBATCH --mem=50GB
 #SBATCH --gpus-per-node=a100.20gb:1
 #SBATCH --output=/home1/p313544/slurm_logs/%x.%j.out
@@ -29,16 +29,9 @@ export PATH_TO_STORAGE=/scratch/p313544/storage_cache/ret_toxicity
 
 
 cd $PATH_TO_PRJ
-echo "Executing 3 python script..."
-echo "==================================================================="
+
 echo "[PT]"
 python $SCRIPT_NAME -c configs/falcon7B.yaml
-echo "==================================================================="
-echo "[FT]"
-python $SCRIPT_NAME -c configs/falcon7b-FT.yaml
-echo "==================================================================="
-echo "[RL]"
-python $SCRIPT_NAME -c configs/falcon7b-RL.yaml
 
 
 echo "Done!"
