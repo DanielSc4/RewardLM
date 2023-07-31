@@ -1,17 +1,20 @@
 import torch
 from argparse import ArgumentParser
 import yaml
-from peft import LoraConfig, PeftModel
-from transformers import AutoModelForCausalLM, AutoTokenizer
-import inseq
 
-import pandas as pd
 import os
 # disable welcome message
 os.environ['BITSANDBYTES_NOWELCOME'] = '1'
 
+from peft import LoraConfig, PeftModel
+from transformers import AutoModelForCausalLM
+import inseq
+
+import pandas as pd
+
 
 DATASETS_PATHS = {
+    'EleutherAI/gpt-neo-125m': 'results/new_prompts/measured_tox_PT_gpt-neo-125m.csv',      # Debug
     'tiiuae/falcon-7b-instruct': 'results/new_prompts/measured_tox_PT_falcon-7b-instruct.csv',      # PT
     'DanielSc4/falcon-7b-instruct-FT-LoRA-8bit-test1': 'results/new_prompts/measured_tox_FT_falcon-7b-instruct-FT-LoRA-8bit-test1.csv',     # FT
     'DanielSc4/falcon-7b-instruct-RL-LoRA-8bit-test1': 'results/new_prompts/measured_tox_RL_falcon-7b-instruct-RL-LoRA-8bit-test1.csv',     # RL
@@ -87,8 +90,14 @@ def main(config, args):
         attribution_method=args.attribution_method
     )
 
+    inputs = select_prompts(config)
+
+    # debug checks
+    print('Input_texts len: {l}'.format(l=len(inputs['input_texts'])))
+    print('Generated_text len: {l}'.format(l=len(inputs['generated_texts'])))
+
     out = seq_model.attribute(
-        **select_prompts(config),
+        **inputs,
         step_scores=["probability"],
         generation_args = config['generation']['generation_config'],
         batch_size = config['inference_batch_size'],
