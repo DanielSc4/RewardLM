@@ -2,6 +2,7 @@ import torch
 from argparse import ArgumentParser
 import yaml
 
+import psutil
 import os
 # disable welcome message
 os.environ['BITSANDBYTES_NOWELCOME'] = '1'
@@ -9,6 +10,7 @@ os.environ['BITSANDBYTES_NOWELCOME'] = '1'
 from peft import LoraConfig, PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import inseq
+from tqdm import tqdm
 
 import pandas as pd
 
@@ -78,7 +80,7 @@ def select_prompts(config):
     respones = df['responses'].to_list()
     
     output['generated_texts'] = list(map(
-        lambda prompt, respo: str(prompt) + str(respo), 
+        lambda prompt, respo: str(prompt) + str(respo) if str(respo) else '-', 
         output['input_texts'], 
         respones,
         )
@@ -87,8 +89,17 @@ def select_prompts(config):
     return output
 
 
+## TODO:
+# [x] backup every 500 it, for out of memory reason
+# [x] implement your own progress bar
+# [x] near 133 of red_FT some generation are empty; ensure that response is not ''
 
 def main(config, args):
+
+    # memory usage
+
+
+
     model, tokenizer = load_model(config['model_id'], config['load_from_peft'])
 
     # load in inseq
@@ -98,24 +109,39 @@ def main(config, args):
         tokenizer=tokenizer,
     )
 
-    inputs = select_prompts(config)
-
     # debug checks
     print('Input_texts len: {l}'.format(l=len(inputs['input_texts'])))
     print('Generated_text len: {l}'.format(l=len(inputs['generated_texts'])))
 
-    out = seq_model.attribute(
-        **inputs,
-        step_scores=["probability"],
-        generation_args = config['generation']['generation_config'],
-        batch_size = config['inference_batch_size'],
-        show_progress = True,      # decluttering logs
-        pretty_progress = False,
-    )
+    inputs = select_prompts(config)
+
+    # not using batchsize since is not supported anyway:
+    for i, (input_text, generated_text) in tqdm(
+        enumerate(zip(*inputs.values())),
+        desc=f'RAM usage: {psutil.virtual_memory()[3] / 1e9:.2f} / {psutil.virtual_memory()[0] / 1e9:.0f} GB ({psutil.virtual_memory()[2]}%)',
+    ):
+        out_tmp = seq_model.attribute(
+            input_texts=input_text,
+            generated_texts=generated_text,
+            step_scores=["probability"],
+            generation_args = config['generation']['generation_config'],        # not used when contrained generation is on
+            # batch_size = config['inference_batch_size'],
+            show_progress = False,      # decluttering logs
+            pretty_progress = False,
+        )
+
+        # first it
+        if i == 0:
+            out = out_tmp
+        else:
+            out = out.merge_attributions([out, out_tmp])
+        
+        # backup every 500 attributions
+        if i % 500 == 0:
+            out.save(
+                args.output_path + 'attributes_{model_name}_{it}.json'.format(model_name = config['model_id'].split('/')[-1], it = i),
+            )
     
-    print(len(out))
-    print(type(out))
-    print(out)
     
     print('[x] Saving attributes')
     out.save(

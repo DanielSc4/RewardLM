@@ -16,3 +16,4 @@ wandb
 einops
 inseq
 google-api-python-client
+psutil
