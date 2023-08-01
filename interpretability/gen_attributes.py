@@ -37,8 +37,8 @@ def load_model(model_id: str, load_from_peft: bool):
     def download_model(pretrained):
         return AutoModelForCausalLM.from_pretrained(
             pretrained,
-            # load in bf16, shouldn't be a problem w/ inseq and merging LoRA weights(?)
-            torch_dtype = torch.bfloat16 if torch.cuda.is_available() else torch.float32,
+            # load in fp16, shouldn't be a problem w/ inseq and merging LoRA weights(?)
+            torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32,
             device_map = 'auto' if torch.cuda.is_available() else 'cpu',
             trust_remote_code=True,
         )
