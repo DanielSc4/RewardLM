@@ -25,13 +25,13 @@ SCRIPT_NAME=interpretability/gen_attributes.py
 
 
 # checkpoint save path
-export PATH_TO_STORAGE=/scratch/p313544/storage_cache/ret_toxicity
+export PATH_TO_STORAGE=/scratch/p313544/storage_cache/interpret_models/
 
 
 cd $PATH_TO_PRJ
 
 echo "[FT]"
-python $SCRIPT_NAME -c configs/falcon7b-FT.yaml
+python $SCRIPT_NAME -c configs/falcon7b-FT.yaml -o $PATH_TO_STORAGE
 
 
 echo "Done!"

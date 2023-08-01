@@ -25,13 +25,13 @@ SCRIPT_NAME=interpretability/gen_attributes.py
 
 
 # checkpoint save path
-export PATH_TO_STORAGE=/scratch/p313544/storage_cache/ret_toxicity
+export PATH_TO_STORAGE=/scratch/p313544/storage_cache/interpret_models/
 
 
 cd $PATH_TO_PRJ
 
 echo "[RL]"
-python $SCRIPT_NAME -c configs/RedPajama-INCITE-Chat-3B-LoRA-RL.yaml
+python $SCRIPT_NAME -c configs/RedPajama-INCITE-Chat-3B-LoRA-RL.yaml -o $PATH_TO_STORAGE
 
 
 echo "Done!"

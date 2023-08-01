@@ -97,6 +97,10 @@ def select_prompts(config, start_from):
 # [x] implement your own progress bar
 # [x] near 133 of red_FT some generation are empty; ensure that response is not ''
 
+def _get_pbar_desc():
+    return f'RAM usage: {psutil.virtual_memory()[3] / 1e9:.2f} / {psutil.virtual_memory()[0] / 1e9:.0f} GB ({psutil.virtual_memory()[2]}%) | Progress'
+
+
 def main(config, args):
 
     # memory usage
@@ -109,22 +113,28 @@ def main(config, args):
         tokenizer=tokenizer,
     )
 
-    # debug checks
+    inputs = select_prompts(config, args.start_from)
+
+    # initial checks
     print('Input_texts len: {l}'.format(l=len(inputs['input_texts'])))
     print('Generated_text len: {l}'.format(l=len(inputs['generated_texts'])))
 
-    inputs = select_prompts(config, args.start_from)
 
-    # not using batchsize since is not supported anyway:
-    for i, (input_text, generated_text) in tqdm(
+    pbar = tqdm(
         enumerate(zip(*inputs.values())),
-        desc=f'RAM usage: {psutil.virtual_memory()[3] / 1e9:.2f} / {psutil.virtual_memory()[0] / 1e9:.0f} GB ({psutil.virtual_memory()[2]}%)',
-    ):
+        desc=_get_pbar_desc(),
+        total=len(inputs['generated_texts']),
+    )
+
+    # one by one since I want to control the progressbar and batchsize is not supported anyway
+    for i, (input_text, generated_text) in pbar:
+        pbar.set_description(_get_pbar_desc())
+
         out_tmp = seq_model.attribute(
             input_texts=input_text,
             generated_texts=generated_text,
             step_scores=["probability"],
-            generation_args = config['generation']['generation_config'],        # not used when contrained generation is on
+            # generation_args = config['generation']['generation_config'],        # not used when contrained generation is on
             # batch_size = config['inference_batch_size'],
             show_progress = False,      # decluttering logs
             pretty_progress = False,
@@ -139,7 +149,8 @@ def main(config, args):
         # backup every 500 attributions
         if i % 500 == 0:
             out.save(
-                args.output_path + 'attributes_{model_name}_{it}.json'.format(model_name = config['model_id'].split('/')[-1], it = i),
+                args.output_path + 'attributes_{model_name}_{it}it.json'.format(model_name = config['model_id'].split('/')[-1], it = i),
+                overwrite=True,
             )
     
     
