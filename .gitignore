@@ -90,3 +90,6 @@ credentials.yaml
 
 # old notebooks folder
 notebooks/*
+
+# interpretability results (too heavy)
+results/interp_res/interpret_models/*
