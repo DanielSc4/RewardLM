@@ -66,8 +66,11 @@ def load_model(model_id: str, load_from_peft: bool):
 
 
 
-def select_prompts(config):
+def select_prompts(config, start_from):
     df = pd.read_csv(DATASETS_PATHS[config['model_id']], index_col = 0)
+    
+    # used to jump ahead in the dataset in case of attribution already done in a previous backup (if 0 the entire df is left untouched)
+    df = df[start_from:]
     
     # if dubug on subset is active
     if config['data']['subset']:
@@ -97,9 +100,6 @@ def select_prompts(config):
 def main(config, args):
 
     # memory usage
-
-
-
     model, tokenizer = load_model(config['model_id'], config['load_from_peft'])
 
     # load in inseq
@@ -113,7 +113,7 @@ def main(config, args):
     print('Input_texts len: {l}'.format(l=len(inputs['input_texts'])))
     print('Generated_text len: {l}'.format(l=len(inputs['generated_texts'])))
 
-    inputs = select_prompts(config)
+    inputs = select_prompts(config, args.start_from)
 
     # not using batchsize since is not supported anyway:
     for i, (input_text, generated_text) in tqdm(
@@ -134,7 +134,7 @@ def main(config, args):
         if i == 0:
             out = out_tmp
         else:
-            out = out.merge_attributions([out, out_tmp])
+            out = inseq.FeatureAttributionOutput.merge_attributions([out, out_tmp])
         
         # backup every 500 attributions
         if i % 500 == 0:
@@ -143,7 +143,7 @@ def main(config, args):
             )
     
     
-    print('[x] Saving attributes')
+    print('[x] Saving all attributions')
     out.save(
         args.output_path + 'attributes_{model_name}.json'.format(model_name = config['model_id'].split('/')[-1]),
         overwrite=True,    
@@ -171,6 +171,12 @@ if __name__ == '__main__':
         required=False, 
         help='Attribuition method used for inseq',
         default='./results/interp_res/',
+    )
+    parser.add_argument(
+        '-s', '--start_from', 
+        required=False, 
+        help='Start from n-th iteration (used to jump ahead in the dataset in case of attribution already done in a previous backup. Defaults to 0)',
+        default=0,
     )
 
     args = parser.parse_args()
