@@ -13,5 +13,10 @@ data:
   # Start from n-th iteration (used to jump ahead in the dataset in case of attribution already done in a previous backup). Defaults to 0
   start_from: 0
 
-  # Select a subset using stratified sampling based on perspectiveAPI score buckets (low, mid and high toxicity). If 0, sampling is not applied. Defaults to 0
-  pre_set: 0
+  # If 0, sampling is not applied. Defaults to 0
+  subset_size: 0
+  # Stratified sampling samples from the original dataset
+  # keeping the same distribution of score bucket provided by perspectiveAPI
+  # (low, mid and high toxicity). If No, the sampled dataset will be composed by
+  # 1/3 of each bucket.
+  stratified_sampling: No

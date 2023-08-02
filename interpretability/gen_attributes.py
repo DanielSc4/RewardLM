@@ -14,7 +14,7 @@ from tqdm import tqdm
 import time
 import pandas as pd
 
-from interp_utils import _assign_label
+from interp_utils import _assign_label, stratify_df
 
 
 DATASETS_PATHS = {
@@ -28,13 +28,22 @@ DATASETS_PATHS = {
 }
 
 
-def read_config(config_path):
+def read_config(config_path: str):
     with open(config_path) as ymlfile:
         cfg = yaml.safe_load(ymlfile)
     return cfg
 
 
 def load_model(model_id: str, load_from_peft: bool):
+    """Loads and prepares the model and the tokenizer for inseq loading procedure.
+
+    Args:
+        model_id (str): HuggingFace identifier of the model
+        load_from_peft (bool): whether the HuggingFace id refears to a Peft model or its original version.
+    
+    Returns:
+        tuple[AutoModel*, AutoTokenier*]: model and tokenizer ready to be used with inseq
+    """
 
     def download_model(pretrained):
         return AutoModelForCausalLM.from_pretrained(
@@ -68,27 +77,16 @@ def load_model(model_id: str, load_from_peft: bool):
 
 
 
-def stratify_df(df: pd.DataFrame, pre_set_size):
-    assert 'pro_API_response_score' in df.columns
-    
-    df['label'] = df['pro_API_response_score'].apply(_assign_label)
+def select_prompts(model_config: dict, data_config: dict):
+    """Reads the dataset corresponding to the model's generation and performs all pre-processing specified by the provided interpretability configuration file.
 
-    # selecting stratified
-    c = df['label'].value_counts().apply(lambda x: x/len(df))
-    stratified_df = pd.concat([
-            group.sample(
-                int(c[lbl] * pre_set_size), 
-                replace=False, 
-                random_state=42
-            ) for lbl, group in df.groupby('label')
-    ])
-    return stratified_df
+    Args:
+        model_config (dict): model's configuration
+        data_config (dict): interpretability configuration
 
-    # TODO: probably better selecting non stratified (?)
-
-
-
-def select_prompts(model_config, data_config):
+    Returns:
+        Dict['input_text': List[str], 'generated_text': List[str]]: list of prompts and prompts + generation
+    """
     df = pd.read_csv(DATASETS_PATHS[model_config['model_id']], index_col = 0)
 
     # used to jump ahead in the dataset in case of attribution already done in a previous backup (if 0 the entire df is left untouched)
@@ -98,8 +96,8 @@ def select_prompts(model_config, data_config):
     if model_config['data']['subset']:
         df = df.head(model_config['data']['subset_size'])
     
-    if data_config['pre_set'] > 0:
-        df = stratify_df(df, data_config['pre_set'])
+    if data_config['subset_size'] > 0:
+        df = stratify_df(df, data_config['subset_size'])
 
 
     output = {
@@ -118,12 +116,12 @@ def select_prompts(model_config, data_config):
     return output
 
 
-## TODO:
-# [x] backup every 500 it, for out of memory reason
-# [x] implement your own progress bar
-# [x] near 133 of red_FT some generation are empty; ensure that response is not ''
-
 def _get_pbar_desc():
+    """Update (tqdm) progress bar description with RAM usage
+
+    Returns:
+        str: new description with updated info
+    """
     return f'RAM usage: {psutil.virtual_memory()[3] / 1e9:.2f} / {psutil.virtual_memory()[0] / 1e9:.0f} GB ({psutil.virtual_memory()[2]}%) | Progress'
 
 
@@ -191,6 +189,11 @@ def main(model_config, interp_config):
         overwrite=True,    
     )
     print('[x] Done')
+
+
+
+
+
 
 
 if __name__ == '__main__':
