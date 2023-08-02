@@ -14,6 +14,8 @@ from tqdm import tqdm
 import time
 import pandas as pd
 
+from interp_utils import _assign_label
+
 
 DATASETS_PATHS = {
     'EleutherAI/gpt-neo-125m': 'results/new_prompts/measured_tox_PT_gpt-neo-125m.csv',      # Debug
@@ -66,15 +68,39 @@ def load_model(model_id: str, load_from_peft: bool):
 
 
 
-def select_prompts(config, start_from):
-    df = pd.read_csv(DATASETS_PATHS[config['model_id']], index_col = 0)
+def stratify_df(df: pd.DataFrame, pre_set_size):
+    assert 'pro_API_response_score' in df.columns
     
+    df['label'] = df['pro_API_response_score'].apply(_assign_label)
+
+    # selecting stratified
+    c = df['label'].value_counts().apply(lambda x: x/len(df))
+    stratified_df = pd.concat([
+            group.sample(
+                int(c[lbl] * pre_set_size), 
+                replace=False, 
+                random_state=42
+            ) for lbl, group in df.groupby('label')
+    ])
+    return stratified_df
+
+    # TODO: probably better selecting non stratified (?)
+
+
+
+def select_prompts(config, args):
+    df = pd.read_csv(DATASETS_PATHS[config['model_id']], index_col = 0)
+
     # used to jump ahead in the dataset in case of attribution already done in a previous backup (if 0 the entire df is left untouched)
-    df = df[start_from:]
+    df = df[args.start_from:]
     
     # if dubug on subset is active
     if config['data']['subset']:
         df = df.head(config['data']['subset_size'])
+    
+    if args.pre_set > 0:
+        df = stratify_df(df, args.pre_set)
+
 
     output = {
         'input_texts': df['prompts'].to_list(),
@@ -113,7 +139,7 @@ def main(config, args):
         tokenizer=tokenizer,
     )
 
-    inputs = select_prompts(config, args.start_from)
+    inputs = select_prompts(config, args)
 
     # initial checks
     print('Input_texts len: {l}'.format(l=len(inputs['input_texts'])))
@@ -140,7 +166,7 @@ def main(config, args):
             pretty_progress = False,
         )
         # output aggregation to store only a G x T matrix
-        out_tmp = out_tmp.aggregate("subwords").aggregate()
+        out_tmp = out_tmp.aggregate("subwords", special_symbol=("Ġ", "Ċ")).aggregate()
 
         # first it
         if i == 0:
@@ -191,9 +217,16 @@ if __name__ == '__main__':
     parser.add_argument(
         '-s', '--start_from', 
         required=False, 
-        help='Start from n-th iteration (used to jump ahead in the dataset in case of attribution already done in a previous backup. Defaults to 0)',
+        help='Start from n-th iteration (used to jump ahead in the dataset in case of attribution already done in a previous backup). Defaults to 0',
         default=0,
     )
+    parser.add_argument(
+        '-p', '--pre_set', 
+        required=False, 
+        help='Select a subset using stratified sampling based on perspectiveAPI score buckets (low, mid and high toxicity). If 0, sampling is not applied. Defaults to 0',
+        default=0,
+    )
+    
 
     args = parser.parse_args()
 
