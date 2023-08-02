@@ -1,0 +1,17 @@
+# Debug configuration for the interpretability script
+
+
+
+inseq_settings:
+  attribution_method: input_x_gradient
+
+
+data:
+  # Attribuition method used for inseq
+  out_path: ./results/interp_res/
+
+  # Start from n-th iteration (used to jump ahead in the dataset in case of attribution already done in a previous backup). Defaults to 0
+  start_from: 0
+
+  # Select a subset using stratified sampling based on perspectiveAPI score buckets (low, mid and high toxicity). If 0, sampling is not applied. Defaults to 0
+  pre_set: 0

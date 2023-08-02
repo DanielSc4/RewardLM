@@ -88,18 +88,18 @@ def stratify_df(df: pd.DataFrame, pre_set_size):
 
 
 
-def select_prompts(config, args):
-    df = pd.read_csv(DATASETS_PATHS[config['model_id']], index_col = 0)
+def select_prompts(model_config, data_config):
+    df = pd.read_csv(DATASETS_PATHS[model_config['model_id']], index_col = 0)
 
     # used to jump ahead in the dataset in case of attribution already done in a previous backup (if 0 the entire df is left untouched)
-    df = df[args.start_from:]
+    df = df[data_config['start_from']:]
     
     # if dubug on subset is active
-    if config['data']['subset']:
-        df = df.head(config['data']['subset_size'])
+    if model_config['data']['subset']:
+        df = df.head(model_config['data']['subset_size'])
     
-    if args.pre_set > 0:
-        df = stratify_df(df, args.pre_set)
+    if data_config['pre_set'] > 0:
+        df = stratify_df(df, data_config['pre_set'])
 
 
     output = {
@@ -127,19 +127,19 @@ def _get_pbar_desc():
     return f'RAM usage: {psutil.virtual_memory()[3] / 1e9:.2f} / {psutil.virtual_memory()[0] / 1e9:.0f} GB ({psutil.virtual_memory()[2]}%) | Progress'
 
 
-def main(config, args):
+def main(model_config, interp_config):
 
     # memory usage
-    model, tokenizer = load_model(config['model_id'], config['load_from_peft'])
+    model, tokenizer = load_model(model_config['model_id'], model_config['load_from_peft'])
 
     # load in inseq
     seq_model = inseq.load_model(
         model, # model,
-        attribution_method=args.attribution_method,
+        attribution_method=interp_config['inseq_settings']['attribution_method'],
         tokenizer=tokenizer,
     )
 
-    inputs = select_prompts(config, args)
+    inputs = select_prompts(model_config, interp_config['data'])
 
     # initial checks
     print('Input_texts len: {l}'.format(l=len(inputs['input_texts'])))
@@ -178,7 +178,7 @@ def main(config, args):
         if i % 1 == 0:
             start = time.time()
             out.save(
-                args.output_path + 'attributes_{model_name}_{it}it.json'.format(model_name = config['model_id'].split('/')[-1], it = i),
+                interp_config['data']['output_path'] + 'attributes_{model_name}_{it}it.json'.format(model_name = model_config['model_id'].split('/')[-1], it = i),
                 overwrite=True,
             )
             end = time.time()
@@ -187,7 +187,7 @@ def main(config, args):
     
     print('[x] Saving all attributions')
     out.save(
-        args.output_path + 'attributes_{model_name}.json'.format(model_name = config['model_id'].split('/')[-1]),
+        interp_config['data']['output_path'] + 'attributes_{model_name}.json'.format(model_name = model_config['model_id'].split('/')[-1]),
         overwrite=True,    
     )
     print('[x] Done')
@@ -197,39 +197,22 @@ if __name__ == '__main__':
 
     parser = ArgumentParser(description='lala')
     parser.add_argument(
-        '-c', '--config', 
+        '-m', '--model_config', 
         required=True, 
         help='Config file (.yaml) of the model to test',
         default='configs/debug_GPT-neo.yaml',
     )
     parser.add_argument(
-        '-a', '--attribution_method', 
-        required=False, 
-        help='Attribuition method used for inseq',
-        default='input_x_gradient',
-    )
-    parser.add_argument(
-        '-o', '--output_path', 
-        required=False, 
-        help='Attribuition method used for inseq',
-        default='./results/interp_res/',
-    )
-    parser.add_argument(
-        '-s', '--start_from', 
-        required=False, 
-        help='Start from n-th iteration (used to jump ahead in the dataset in case of attribution already done in a previous backup). Defaults to 0',
-        default=0,
-    )
-    parser.add_argument(
-        '-p', '--pre_set', 
-        required=False, 
-        help='Select a subset using stratified sampling based on perspectiveAPI score buckets (low, mid and high toxicity). If 0, sampling is not applied. Defaults to 0',
-        default=0,
+        '-i', '--interp_config', 
+        required=True, 
+        help='Config file (.yaml) for the interpretability script',
+        default='interpretability/interp_configs/i_debug_GPT-neo.yaml',
     )
     
 
     args = parser.parse_args()
 
-    config = read_config(args.config)
+    model_config = read_config(args.model_config)
+    interp_config = read_config(args.interp_config)
 
-    main(config, args)
+    main(model_config, interp_config)
