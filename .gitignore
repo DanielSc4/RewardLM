@@ -93,3 +93,5 @@ notebooks/*
 
 # interpretability results (too heavy)
 results/interp_res/interpret_models/*
+# avoid debug attributions backup
+results/interp_res/attributes_gpt-neo-*

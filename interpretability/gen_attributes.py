@@ -11,7 +11,7 @@ from peft import LoraConfig, PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import inseq
 from tqdm import tqdm
-
+import time
 import pandas as pd
 
 
@@ -139,6 +139,8 @@ def main(config, args):
             show_progress = False,      # decluttering logs
             pretty_progress = False,
         )
+        # output aggregation to store only a G x T matrix
+        out_tmp = out_tmp.aggregate("subwords").aggregate()
 
         # first it
         if i == 0:
@@ -147,11 +149,14 @@ def main(config, args):
             out = inseq.FeatureAttributionOutput.merge_attributions([out, out_tmp])
         
         # backup every 500 attributions
-        if i % 500 == 0:
+        if i % 1 == 0:
+            start = time.time()
             out.save(
                 args.output_path + 'attributes_{model_name}_{it}it.json'.format(model_name = config['model_id'].split('/')[-1], it = i),
                 overwrite=True,
             )
+            end = time.time()
+            print(end - start)
     
     
     print('[x] Saving all attributions')

@@ -59,7 +59,7 @@ fine_tune_args:
 
 data:
   subset: yes   # Used for debug. If no, the following will be ignored
-  subset_size: 5
+  subset_size: 20
 
 
 
