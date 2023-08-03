@@ -42,7 +42,7 @@ def main(config_name: str):
     )
 
     # save csv in tmp folder
-    fldr = './result analysis/new_prompts'
+    fldr = './results/new_prompts'
     toxicity_df.to_csv(fldr + f'/measured_tox_{config["model_label"]}_{config["model_id"].split("/")[-1]}.csv')
 
 

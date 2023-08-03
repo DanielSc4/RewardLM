@@ -117,6 +117,7 @@ def select_prompts(model_config: dict, data_config: dict):
                     random_state=42
                 ) for _, group in groups
             ])
+            
     # building output dict
     output = {
         'input_texts': df['prompts'].to_list(),

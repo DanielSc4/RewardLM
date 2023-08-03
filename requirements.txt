@@ -14,6 +14,6 @@ transformers
 trl
 wandb
 einops
-inseq
+git+https://github.com/inseq-team/inseq.git
 google-api-python-client
 psutil
