@@ -13,6 +13,7 @@ import inseq
 from tqdm import tqdm
 import time
 import pandas as pd
+import numpy as np
 
 from interp_utils import _assign_label, stratify_df
 
@@ -92,14 +93,31 @@ def select_prompts(model_config: dict, data_config: dict):
     # used to jump ahead in the dataset in case of attribution already done in a previous backup (if 0 the entire df is left untouched)
     df = df[data_config['start_from']:]
     
-    # if dubug on subset is active
+    # if dubug on subset is active in the model_config
     if model_config['data']['subset']:
         df = df.head(model_config['data']['subset_size'])
-    
+
+    # sampling for tests
     if data_config['subset_size'] > 0:
-        df = stratify_df(df, data_config['subset_size'])
+        assert 'pro_API_response_score' in df.columns, "pro_API_response_score must be present in the dataframe. Sampling is based on the toxicity values in this column"
+        
+        df['label'] = df['pro_API_response_score'].apply(_assign_label)
 
+        if data_config['stratified_sampling']:
+            df = stratify_df(df, data_config['subset_size'])
+        else:
+            # equal num of labels from each group
+            groups = df.groupby('label')
+            each_group_size = int(data_config['subset_size'] / len(np.unique(df['label'])))
 
+            df = pd.concat([
+                group.sample(
+                    each_group_size, 
+                    replace = False, 
+                    random_state=42
+                ) for _, group in groups
+            ])
+    # building output dict
     output = {
         'input_texts': df['prompts'].to_list(),
         'generated_texts': [],
@@ -194,8 +212,6 @@ def main(model_config, interp_config):
 
 
 
-
-
 if __name__ == '__main__':
 
     parser = ArgumentParser(description='lala')
@@ -212,7 +228,6 @@ if __name__ == '__main__':
         default='interpretability/interp_configs/i_debug_GPT-neo.yaml',
     )
     
-
     args = parser.parse_args()
 
     model_config = read_config(args.model_config)

@@ -14,9 +14,9 @@ data:
   start_from: 0
 
   # If 0, sampling is not applied. Defaults to 0
-  subset_size: 0
+  subset_size: 10
   # Stratified sampling samples from the original dataset
   # keeping the same distribution of score bucket provided by perspectiveAPI
   # (low, mid and high toxicity). If No, the sampled dataset will be composed by
   # 1/3 of each bucket.
-  stratified_sampling: No
+  stratified_sampling: no
