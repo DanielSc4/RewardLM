@@ -159,8 +159,8 @@ def main(model_config, interp_config):
     inputs = select_prompts(model_config, interp_config['data'])
 
     # initial checks
-    print('Input_texts len: {l}'.format(l=len(inputs['input_texts'])))
-    print('Generated_text len: {l}'.format(l=len(inputs['generated_texts'])))
+    print('[x] Input_texts len: {l}'.format(l=len(inputs['input_texts'])))
+    print('[x] Generated_text len: {l}'.format(l=len(inputs['generated_texts'])))
 
 
     pbar = tqdm(
@@ -169,40 +169,34 @@ def main(model_config, interp_config):
         total=len(inputs['generated_texts']),
     )
 
+    list_of_attr = []
     # one by one since I want to control the progressbar and batchsize is not supported anyway
     for i, (input_text, generated_text) in pbar:
         pbar.set_description(_get_pbar_desc())
 
-        out_tmp = seq_model.attribute(
-            input_texts=input_text,
-            generated_texts=generated_text,
-            step_scores=["probability"],
-            # generation_args = config['generation']['generation_config'],        # not used when contrained generation is on
-            # batch_size = config['inference_batch_size'],
-            show_progress = False,      # decluttering logs
-            pretty_progress = False,
+        list_of_attr.append(
+            seq_model.attribute(
+                input_texts=input_text,
+                generated_texts=generated_text,
+                step_scores=["probability"],
+                # generation_args = config['generation']['generation_config'],        # not used when contrained generation is on
+                # batch_size = config['inference_batch_size'],
+                show_progress = False,      # decluttering logs
+                pretty_progress = False,
+            ).aggregate("subwords", special_symbol=("Ġ", "Ċ")).aggregate()      # output aggregation to store only a G x T matrix
         )
-        # output aggregation to store only a G x T matrix
-        out_tmp = out_tmp.aggregate("subwords", special_symbol=("Ġ", "Ċ")).aggregate()
 
-        # first it
-        if i == 0:
-            out = out_tmp
-        else:
-            out = inseq.FeatureAttributionOutput.merge_attributions([out, out_tmp])
-        
-        # backup every 500 attributions
-        if i % 1 == 0:
-            start = time.time()
+        # backup every backup_freq attribution
+        if i % interp_config['script_settings']['backup_freq'] == 0:
+            out = inseq.merge_attributions(list_of_attr)
             out.save(
                 interp_config['data']['output_path'] + 'attributes_{model_name}_{it}it.json'.format(model_name = model_config['model_id'].split('/')[-1], it = i),
                 overwrite=True,
             )
-            end = time.time()
-            print(end - start)
     
-    
-    print('[x] Saving all attributions')
+    print('[x] Merging attributions')
+    out = inseq.merge_attributions(list_of_attr)
+    print(f'[x] Saving all {len(list_of_attr)} attributions')
     out.save(
         interp_config['data']['output_path'] + 'attributes_{model_name}.json'.format(model_name = model_config['model_id'].split('/')[-1]),
         overwrite=True,    
