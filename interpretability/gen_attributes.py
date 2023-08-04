@@ -183,7 +183,7 @@ def main(model_config, interp_config):
                 # batch_size = config['inference_batch_size'],
                 show_progress = False,      # decluttering logs
                 pretty_progress = False,
-            ).aggregate("subwords", special_symbol=("Ġ", "Ċ")).aggregate()      # output aggregation to store only a G x T matrix
+            ).aggregate("subwords", special_symbol=("Ġ", "Ċ"))      # output aggregation to store only a G x T matrix
         )
 
         # backup every backup_freq attribution
