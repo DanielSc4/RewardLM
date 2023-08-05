@@ -42,7 +42,7 @@ def get_prompt_dependancy(attributions: FeatureAttributionOutput, max_n_tok: int
 
     final = []
     for attr in attributions:
-        if not hasattr(attr, '_aggregator'):
+        if len(attr.target_attributions.shape) != 2:
             # attribution has not been previously aggregated
             attr = attr.aggregate()
         
@@ -57,4 +57,4 @@ def get_prompt_dependancy(attributions: FeatureAttributionOutput, max_n_tok: int
     
     # final = np.nan_to_num(np.vstack(final))
 
-    return final
+    return np.array(final)
