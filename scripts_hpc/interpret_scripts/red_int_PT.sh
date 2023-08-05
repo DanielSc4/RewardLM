@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=red_int_PT
-#SBATCH --time=18:00:00
+#SBATCH --time=06:00:00
 #SBATCH --mem=70GB
 #SBATCH --gpus-per-node=a100.20gb:1
 #SBATCH --output=/home1/p313544/slurm_logs/%x.%j.out
@@ -31,7 +31,7 @@ export PATH_TO_STORAGE=/scratch/p313544/storage_cache/interpret_models/
 cd $PATH_TO_PRJ
 
 echo "[PT]"
-python $SCRIPT_NAME -c configs/RedPajama-INCITE-Chat-3B-v1.yaml -o $PATH_TO_STORAGE
+python $SCRIPT_NAME -c configs/RedPajama-INCITE-Chat-3B-v1.yaml -o results/interp_res/
 
 
 
