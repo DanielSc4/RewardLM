@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=falcon_int_FT
-#SBATCH --time=09:00:00
+#SBATCH --time=10:00:00
 #SBATCH --mem=70GB
 #SBATCH --gpus-per-node=a100.20gb:1
 #SBATCH --output=/home1/p313544/slurm_logs/%x.%j.out
@@ -30,8 +30,12 @@ export PATH_TO_STORAGE=/scratch/p313544/storage_cache/interpret_models/
 
 cd $PATH_TO_PRJ
 
+echo "[PT]"
+python $SCRIPT_NAME -m configs/configs/falcon7B.yaml -i interpretability/interp_configs/i_debug_prod.yaml
 echo "[FT]"
-python $SCRIPT_NAME -c configs/falcon7b-FT.yaml -o results/interp_res/
+python $SCRIPT_NAME -m configs/configs/falcon7b-FT.yaml -i interpretability/interp_configs/i_debug_prod.yaml
+echo "[RL]"
+python $SCRIPT_NAME -m configs/configs/falcon7b-RL.yaml -i interpretability/interp_configs/i_debug_prod.yaml
 
 
 echo "Done!"

@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --job-name=falcon_int_RL
-#SBATCH --time=09:00:00
+#SBATCH --job-name=red_int_FT
+#SBATCH --time=10:00:00
 #SBATCH --mem=70GB
 #SBATCH --gpus-per-node=a100.20gb:1
 #SBATCH --output=/home1/p313544/slurm_logs/%x.%j.out
@@ -30,8 +30,13 @@ export PATH_TO_STORAGE=/scratch/p313544/storage_cache/interpret_models/
 
 cd $PATH_TO_PRJ
 
+echo "[PT]"
+python $SCRIPT_NAME -m configs/configs/RedPajama-INCITE-Chat-3B-v1.yaml -i interpretability/interp_configs/i_debug_prod.yaml
+echo "[FT]"
+python $SCRIPT_NAME -m configs/configs/RedPajama-INCITE-Chat-3B-LoRA-FT.yaml -i interpretability/interp_configs/i_debug_prod.yaml
 echo "[RL]"
-python $SCRIPT_NAME -c configs/falcon7b-RL.yaml -o results/interp_res/
+python $SCRIPT_NAME -m configs/configs/RedPajama-INCITE-Chat-3B-LoRA-RL.yaml -i interpretability/interp_configs/i_debug_prod.yaml
+
 
 
 echo "Done!"
