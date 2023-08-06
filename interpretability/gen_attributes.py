@@ -135,13 +135,13 @@ def select_prompts(model_config: dict, data_config: dict):
     return output
 
 
-def _get_pbar_desc():
+def _get_pbar_desc(activity: str = ''):
     """Update (tqdm) progress bar description with RAM usage
 
     Returns:
         str: new description with updated info
     """
-    return f'RAM usage: {psutil.virtual_memory()[3] / 1e9:.2f} / {psutil.virtual_memory()[0] / 1e9:.0f} GB ({psutil.virtual_memory()[2]}%) | Progress'
+    return f'[{activity}] RAM usage: {psutil.virtual_memory()[3] / 1e9:.2f} / {psutil.virtual_memory()[0] / 1e9:.0f} GB ({psutil.virtual_memory()[2]}%) | Progress'
 
 
 def main(model_config, interp_config):
@@ -173,7 +173,7 @@ def main(model_config, interp_config):
     list_of_lbls = []
     # one by one since I want to control the progressbar and batchsize is not supported anyway
     for i, (input_text, generated_text, assigned_label) in pbar:
-        pbar.set_description(_get_pbar_desc())
+        pbar.set_description(_get_pbar_desc(activity= 'Attributing ...'))
 
         list_of_attr.append(
             seq_model.attribute(
@@ -190,6 +190,7 @@ def main(model_config, interp_config):
 
         # backup every backup_freq attribution
         if i % interp_config['script_settings']['backup_freq'] == 0:
+            pbar.set_description(_get_pbar_desc(activity= 'Saving ...'))
             out = inseq.merge_attributions(list_of_attr)
             path_file_name = interp_config['data']['output_path'] + 'attributes_{model_name}_{it}it.json'.format(model_name = model_config['model_id'].split('/')[-1], it = i)
             out.save(
