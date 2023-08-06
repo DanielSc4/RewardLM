@@ -27,16 +27,16 @@ def stratify_df(df: pd.DataFrame, subset_size):
     return stratified_df
 
 
-def get_prompt_dependancy(attributions: FeatureAttributionOutput, max_n_tok: int = 50):
+def get_prompt_dependancy(attributions: FeatureAttributionOutput, max_n_tok: int = 50,):
     r"""Compute prompt token level dependancy for each generation in attributions
     Notice: generation dependancy can be calculated as `1 - prompt_dependancy`.
 
     Args:
         `attributions` (FeatureAttributionOutput): attributions used to compute the prompt token level dependancy
         `max_n_tok` (int, optional): number of maximum generated tokens where dependancy is computed. Defaults to 50.
-
+        
     Returns:
-        `np.array`: numpy array [len(attributions), max_n_tok]
+        `np.array`: numpy array with `[len(attributions), max_n_tok]` shape.
     """
 
     final = []
