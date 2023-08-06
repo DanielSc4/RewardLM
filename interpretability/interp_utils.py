@@ -5,7 +5,6 @@ from inseq import FeatureAttributionOutput
 
 
 
-
 def _assign_label(value):
     if value < 0.333:
         return 'low'

@@ -86,7 +86,7 @@ def select_prompts(model_config: dict, data_config: dict):
         data_config (dict): interpretability configuration
 
     Returns:
-        Dict['input_text': List[str], 'generated_text': List[str]]: list of prompts and prompts + generation
+        Dict['input_text': List[str], 'generated_text': List[str], 'assigned_label': str]: list of prompts and prompts + generation
     """
     df = pd.read_csv(DATASETS_PATHS[model_config['model_id']], index_col = 0)
 
@@ -97,12 +97,11 @@ def select_prompts(model_config: dict, data_config: dict):
     if model_config['data']['subset']:
         df = df.head(model_config['data']['subset_size'])
 
+    assert 'pro_API_response_score' in df.columns, "pro_API_response_score must be present in the dataframe. Both sampling and results are based on the toxicity values in this column"
+    df['label'] = df['pro_API_response_score'].apply(_assign_label)
+
     # sampling for tests
     if data_config['subset_size'] > 0:
-        assert 'pro_API_response_score' in df.columns, "pro_API_response_score must be present in the dataframe. Sampling is based on the toxicity values in this column"
-        
-        df['label'] = df['pro_API_response_score'].apply(_assign_label)
-
         if data_config['stratified_sampling']:
             df = stratify_df(df, data_config['subset_size'])
         else:
@@ -122,6 +121,7 @@ def select_prompts(model_config: dict, data_config: dict):
     output = {
         'input_texts': df['prompts'].to_list(),
         'generated_texts': [],
+        'assigned_label': df['label'].to_list(),
     }
     respones = df['responses'].to_list()
     
@@ -170,8 +170,9 @@ def main(model_config, interp_config):
     )
 
     list_of_attr = []
+    list_of_lbls = []
     # one by one since I want to control the progressbar and batchsize is not supported anyway
-    for i, (input_text, generated_text) in pbar:
+    for i, (input_text, generated_text, assigned_label) in pbar:
         pbar.set_description(_get_pbar_desc())
 
         list_of_attr.append(
@@ -185,6 +186,7 @@ def main(model_config, interp_config):
                 pretty_progress = False,
             ).aggregate("subwords", special_symbol=("Ġ", "Ċ")).aggregate()      # output aggregation to store only a G x T matrix (to show -> do_aggregation=False)
         )
+        list_of_lbls.append(assigned_label)
 
         # backup every backup_freq attribution
         if i % interp_config['script_settings']['backup_freq'] == 0:
@@ -193,6 +195,9 @@ def main(model_config, interp_config):
                 interp_config['data']['output_path'] + 'attributes_{model_name}_{it}it.json'.format(model_name = model_config['model_id'].split('/')[-1], it = i),
                 overwrite=True,
             )
+            pd.Series(list_of_lbls).to_csv(
+                interp_config['data']['output_path'] + 'lbls_{model_name}_{it}it.json'.format(model_name = model_config['model_id'].split('/')[-1], it = i),
+            )
     
     print('[x] Merging attributions')
     out = inseq.merge_attributions(list_of_attr)
@@ -200,6 +205,9 @@ def main(model_config, interp_config):
     out.save(
         interp_config['data']['output_path'] + 'attributes_{model_name}.json'.format(model_name = model_config['model_id'].split('/')[-1]),
         overwrite=True,    
+    )
+    pd.Series(list_of_lbls).to_csv(
+        interp_config['data']['output_path'] + 'lbls_{model_name}.json'.format(model_name = model_config['model_id'].split('/')[-1]),
     )
     print('[x] Done')
 
