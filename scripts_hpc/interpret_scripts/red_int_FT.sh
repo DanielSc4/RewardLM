@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=red_int
+#SBATCH --job-name=red_int_FT
 #SBATCH --time=40:00:00
 #SBATCH --mem=70GB
 #SBATCH --gpus-per-node=a100.20gb:1

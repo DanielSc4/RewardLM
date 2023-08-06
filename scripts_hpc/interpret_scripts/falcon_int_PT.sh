@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=falcon_int
+#SBATCH --job-name=falcon_int_PT
 #SBATCH --time=40:00:00
 #SBATCH --mem=70GB
 #SBATCH --gpus-per-node=a100:1
