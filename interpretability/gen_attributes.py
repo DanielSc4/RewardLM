@@ -50,7 +50,7 @@ def load_model(model_id: str, load_from_peft: bool):
         return AutoModelForCausalLM.from_pretrained(
             pretrained,
             # load in fp16, shouldn't be a problem w/ inseq and merging LoRA weights(?)
-            torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32,
+            torch_dtype = torch.float32, # ex but Half not yet implemented for interpretability aggregation w/ inseq: torch.float16 if torch.cuda.is_available() else torch.float32
             device_map = 'auto' if torch.cuda.is_available() else 'cpu',
             trust_remote_code=True,
         )
