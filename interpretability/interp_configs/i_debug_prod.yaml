@@ -7,7 +7,7 @@ inseq_settings:
 
 
 script_settings:
-  backup_freq: 500   # backup every backup_freq attribution
+  backup_freq: 200   # backup every backup_freq attribution
 
 data:
   # Start from n-th iteration (used to jump ahead in the dataset in case of attribution already done in a previous backup). Defaults to 0
