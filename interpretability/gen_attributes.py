@@ -191,9 +191,10 @@ def main(model_config, interp_config):
         # backup every backup_freq attribution
         if i % interp_config['script_settings']['backup_freq'] == 0:
             out = inseq.merge_attributions(list_of_attr)
+            path_file_name = interp_config['data']['output_path'] + 'attributes_{model_name}_{it}it.json'.format(model_name = model_config['model_id'].split('/')[-1], it = i)
             out.save(
-                interp_config['data']['output_path'] + 'attributes_{model_name}_{it}it.json'.format(model_name = model_config['model_id'].split('/')[-1], it = i),
-                overwrite=True,
+                path_file_name,
+                overwrite=os.path.exists(path_file_name),     # overwrite if already exists
             )
             pd.Series(list_of_lbls).to_csv(
                 interp_config['data']['output_path'] + 'lbls_{model_name}_{it}it.json'.format(model_name = model_config['model_id'].split('/')[-1], it = i),
@@ -202,9 +203,10 @@ def main(model_config, interp_config):
     print('[x] Merging attributions')
     out = inseq.merge_attributions(list_of_attr)
     print(f'[x] Saving all {len(list_of_attr)} attributions')
+    path_file_name = interp_config['data']['output_path'] + 'attributes_{model_name}.json'.format(model_name = model_config['model_id'].split('/')[-1])
     out.save(
-        interp_config['data']['output_path'] + 'attributes_{model_name}.json'.format(model_name = model_config['model_id'].split('/')[-1]),
-        overwrite=True,    
+        path_file_name,
+        overwrite=os.path.exists(path_file_name),     # overwrite if already exists
     )
     pd.Series(list_of_lbls).to_csv(
         interp_config['data']['output_path'] + 'lbls_{model_name}.json'.format(model_name = model_config['model_id'].split('/')[-1]),
