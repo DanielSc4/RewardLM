@@ -31,11 +31,11 @@ export PATH_TO_STORAGE=/scratch/p313544/storage_cache/interpret_models/
 cd $PATH_TO_PRJ
 
 echo "[PT]"
-python $SCRIPT_NAME -m configs/configs/RedPajama-INCITE-Chat-3B-v1.yaml -i interpretability/interp_configs/i_debug_prod.yaml
+python $SCRIPT_NAME -m configs/RedPajama-INCITE-Chat-3B-v1.yaml -i interpretability/interp_configs/i_debug_prod.yaml
 echo "[FT]"
-python $SCRIPT_NAME -m configs/configs/RedPajama-INCITE-Chat-3B-LoRA-FT.yaml -i interpretability/interp_configs/i_debug_prod.yaml
+python $SCRIPT_NAME -m configs/RedPajama-INCITE-Chat-3B-LoRA-FT.yaml -i interpretability/interp_configs/i_debug_prod.yaml
 echo "[RL]"
-python $SCRIPT_NAME -m configs/configs/RedPajama-INCITE-Chat-3B-LoRA-RL.yaml -i interpretability/interp_configs/i_debug_prod.yaml
+python $SCRIPT_NAME -m configs/RedPajama-INCITE-Chat-3B-LoRA-RL.yaml -i interpretability/interp_configs/i_debug_prod.yaml
 
 
 
