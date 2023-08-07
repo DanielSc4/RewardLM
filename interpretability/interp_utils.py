@@ -71,7 +71,7 @@ def get_plot_prompt_dep_toxicity(dependancies: np.array, attr_labels: np.array, 
         dependancies (`np.array`): prompt dependancies obtained from `get_prompt_dependancy` fun.
         attr_labels (`np.array`): array with shape `(n, 1)` where `n` is the number of attributions.
         model_name (`str`): name of the model (title).
-        fig_kwargs (`dict`): figure kwargs.
+        fig_kwargs (`dict`): figure kwargs. Defaults to None.
 
     Returns:
         `matplotlib.pyplot`: same as description.
@@ -81,8 +81,6 @@ def get_plot_prompt_dep_toxicity(dependancies: np.array, attr_labels: np.array, 
     
     if attr_labels[0]:
         assert dependancies.shape[0] == len(attr_labels), f"Number of dependancies (0 dim of dependancies: {dependancies.shape[0]}) must be equal to the number of given labels ({len(attr_labels)})"
-
-    dependancies.shape[0]
 
     if not fig_kwargs:
         fig_kwargs = {
@@ -126,6 +124,16 @@ def get_plot_prompt_dep_toxicity(dependancies: np.array, attr_labels: np.array, 
 
 
 def get_plot_training_compare(dependencies: dict, model_name:str, fig_kwargs: dict = None):
+    """Plot prompt dependancy comparing different type of training, Pre-Trained, Fine-Tuned and Reinforcement Learning.
+
+    Args:
+        dependencies (`np.array`): prompt dependancies obtained from `get_prompt_dependancy` fun.
+        model_name (`str`): name of the model (title).
+        fig_kwargs (`dict`): figure kwargs. Defaults to None.
+
+    Returns:
+        `matplotlib.pyplot`: same as description.
+    """
     
     # check
     exp_keys = ['PT', 'FT', 'RL']
