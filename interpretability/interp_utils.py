@@ -65,7 +65,7 @@ def get_plot_prompt_dep_toxicity(dependancies: np.array, attr_labels: np.array, 
     Args:
         dependancies (`np.array`): prompt dependancies obtained from `get_prompt_dependancy` fun.
         attr_labels (`np.array`): array with shape `(n, 1)` where `n` is the number of attributions.
-        fig_kwargs (`dict`): figure kwargs
+        fig_kwargs (`dict`): figure kwargs.
 
     Returns:
         `matplotlib.pyplot`: same as description.
@@ -76,10 +76,11 @@ def get_plot_prompt_dep_toxicity(dependancies: np.array, attr_labels: np.array, 
 
     dependancies.shape[0]
 
-    fig_kwargs = {
-        'figsize': (10, 5),
-        'dpi': 300,
-    }
+    if not fig_kwargs:
+        fig_kwargs = {
+            'figsize': (10, 5),
+            'dpi': 300,
+        }
 
     plt.figure(**fig_kwargs)
     plt.title('Generation prompt dependancy, avg per toxicity level')
@@ -93,3 +94,18 @@ def get_plot_prompt_dep_toxicity(dependancies: np.array, attr_labels: np.array, 
     plt.ylabel('prompt dependancy (sum)')
     plt.grid(alpha = .3)
     return plt
+
+
+
+
+def get_plot_compare_models(dependencies: dict, fig_kwargs: dict):
+
+    if not fig_kwargs:
+        fig_kwargs = {
+            'figsize': (10, 5),
+            'dpi': 300,
+        }
+
+    
+    
+    return
