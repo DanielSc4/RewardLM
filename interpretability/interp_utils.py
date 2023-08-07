@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 from inseq import FeatureAttributionOutput
-
 
 
 def _assign_label(value):
@@ -57,3 +57,39 @@ def get_prompt_dependancy(attributions: FeatureAttributionOutput, max_n_tok: int
     # final = np.nan_to_num(np.vstack(final))
 
     return np.array(final)
+
+
+def get_plot_prompt_dep_toxicity(dependancies: np.array, attr_labels: np.array, fig_kwargs: dict):
+    r"""Plot average prompt dependancy, distinguishing between the bucket in `attr_labels`.
+
+    Args:
+        dependancies (`np.array`): prompt dependancies obtained from `get_prompt_dependancy` fun.
+        attr_labels (`np.array`): array with shape `(n, 1)` where `n` is the number of attributions.
+        fig_kwargs (`dict`): figure kwargs
+
+    Returns:
+        `matplotlib.pyplot`: same as description.
+    """
+
+    if attr_labels[0]:
+        assert dependancies.shape[0] == len(attr_labels), f"Number of dependancies (0 dim of dependancies: {dependancies.shape[0]}) must be equal to the number of given labels ({len(attr_labels)})"
+
+    dependancies.shape[0]
+
+    fig_kwargs = {
+        'figsize': (10, 5),
+        'dpi': 300,
+    }
+
+    plt.figure(**fig_kwargs)
+    plt.title('Generation prompt dependancy, avg per toxicity level')
+    for i, lbl in enumerate(np.unique(attr_labels)):
+        plt.plot(
+            np.nanmean(dependancies[(attr_labels == np.unique(attr_labels))[:, i]], axis = 0),
+            label = lbl,
+        )
+    plt.legend()
+    plt.xlabel(r'$n$ generated tokens')
+    plt.ylabel('prompt dependancy (sum)')
+    plt.grid(alpha = .3)
+    return plt
