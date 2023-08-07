@@ -126,7 +126,7 @@ def select_prompts(model_config: dict, data_config: dict):
     respones = df['responses'].to_list()
     
     output['generated_texts'] = list(map(
-        lambda prompt, respo: str(prompt) + str(respo) if str(respo) else '-', 
+        lambda prompt, respo: str(prompt) + str(respo) if not pd.isna(respo) and str(respo) else '-', # ensure to not have empty resposnes
         output['input_texts'], 
         respones,
         )
