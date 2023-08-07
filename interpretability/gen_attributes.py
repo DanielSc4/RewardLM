@@ -78,20 +78,22 @@ def load_model(model_id: str, load_from_peft: bool):
 
 
 
-def select_prompts(model_config: dict, data_config: dict):
-    """Reads the dataset corresponding to the model's generation and performs all pre-processing specified by the provided interpretability configuration file.
+def select_prompts(model_config: dict, data_config: dict, start_from: int = 0):
+    r"""Reads the dataset corresponding to the model's generation and performs all pre-processing specified by the provided interpretability configuration file.
 
     Args:
-        model_config (dict): model's configuration
-        data_config (dict): interpretability configuration
+        model_config (`dict`): model's configuration
+        data_config (`dict`): interpretability configuration
+        start_from (`int`): jump ahead in the dataset in case of attribution already done in a previous backup). Defaults to 0.
 
     Returns:
-        Dict['input_text': List[str], 'generated_text': List[str], 'assigned_label': str]: list of prompts and prompts + generation
+        `Dict['input_text': List[str], 'generated_text': List[str], 'assigned_label': str]`: list of prompt, prompt + generation and label.
     """
     df = pd.read_csv(DATASETS_PATHS[model_config['model_id']], index_col = 0)
 
     # used to jump ahead in the dataset in case of attribution already done in a previous backup (if 0 the entire df is left untouched)
-    df = df[data_config['start_from']:]
+    if start_from > 0:
+        df = df[start_from + 1:]        # +1 because the start_from-th record is already present in the backup
     
     # if dubug on subset is active in the model_config
     if model_config['data']['subset']:
@@ -144,7 +146,7 @@ def _get_pbar_desc(activity: str = ''):
     return f'[{activity}] RAM usage: {psutil.virtual_memory()[3] / 1e9:.2f} / {psutil.virtual_memory()[0] / 1e9:.0f} GB ({psutil.virtual_memory()[2]}%) | Progress'
 
 
-def main(model_config, interp_config):
+def main(model_config, interp_config, start_from):
 
     # memory usage
     model, tokenizer = load_model(model_config['model_id'], model_config['load_from_peft'])
@@ -156,12 +158,22 @@ def main(model_config, interp_config):
         tokenizer=tokenizer,
     )
 
-    inputs = select_prompts(model_config, interp_config['data'])
+    inputs = select_prompts(model_config, interp_config['data'], start_from)
+
+    if start_from > 0:
+        path_file_name = interp_config['data']['output_path'] + 'attributes_{model_name}_{it}it.json'.format(model_name = model_config['model_id'].split('/')[-1], it = start_from)
+        print(f"[x] Getting latest backup (and labels) from {path_file_name}")
+        out_from_backup = inseq.FeatureAttributionOutput.load(path_file_name)
+
+        assigned_label_from_backup = pd.read_csv(
+            interp_config['data']['output_path'] + 'lbls_{model_name}_{it}it.json'.format(model_name = model_config['model_id'].split('/')[-1], it = start_from), 
+            index_col=0
+        ).iloc[:, 0].values.tolist()
+
 
     # initial checks
     print('[x] Input_texts len: {l}'.format(l=len(inputs['input_texts'])))
     print('[x] Generated_text len: {l}'.format(l=len(inputs['generated_texts'])))
-
 
     pbar = tqdm(
         enumerate(zip(*inputs.values())),
@@ -171,6 +183,10 @@ def main(model_config, interp_config):
 
     list_of_attr = []
     list_of_lbls = []
+    # if backup is present
+    if start_from > 0:
+        list_of_lbls = assigned_label_from_backup
+    
     # one by one since I want to control the progressbar and batchsize is not supported anyway
     for i, (input_text, generated_text, assigned_label) in pbar:
         pbar.set_description(_get_pbar_desc(activity= 'Attributing ...'))
@@ -188,21 +204,30 @@ def main(model_config, interp_config):
         )
         list_of_lbls.append(assigned_label)
 
-        # backup every backup_freq attribution
-        if i % interp_config['script_settings']['backup_freq'] == 0:
+        # backup every backup_freq attribution, jumping the first it
+        if i % interp_config['script_settings']['backup_freq'] == 0 and i != 0:
             pbar.set_description(_get_pbar_desc(activity= 'Saving ...'))
-            out = inseq.merge_attributions(list_of_attr)
-            path_file_name = interp_config['data']['output_path'] + 'attributes_{model_name}_{it}it.json'.format(model_name = model_config['model_id'].split('/')[-1], it = i)
+            
+            # if backup is present
+            if start_from > 0:
+                out = inseq.merge_attributions([out_from_backup, *list_of_attr])
+            else:
+                out = inseq.merge_attributions(list_of_attr)
+            
+            path_file_name = interp_config['data']['output_path'] + 'attributes_{model_name}_{it}it.json'.format(model_name = model_config['model_id'].split('/')[-1], it = i + start_from)
             out.save(
                 path_file_name,
                 overwrite=os.path.exists(path_file_name),     # overwrite if already exists
             )
             pd.Series(list_of_lbls).to_csv(
-                interp_config['data']['output_path'] + 'lbls_{model_name}_{it}it.json'.format(model_name = model_config['model_id'].split('/')[-1], it = i),
+                interp_config['data']['output_path'] + 'lbls_{model_name}_{it}it.json'.format(model_name = model_config['model_id'].split('/')[-1], it = i + start_from),
             )
     
     print('[x] Merging attributions')
-    out = inseq.merge_attributions(list_of_attr)
+    if start_from > 0:
+        out = inseq.merge_attributions([out_from_backup, *list_of_attr])
+    else:
+        out = inseq.merge_attributions(list_of_attr)
     print(f'[x] Saving all {len(list_of_attr)} attributions')
     path_file_name = interp_config['data']['output_path'] + 'attributes_{model_name}.json'.format(model_name = model_config['model_id'].split('/')[-1])
     out.save(
@@ -233,10 +258,21 @@ if __name__ == '__main__':
         help='Config file (.yaml) for the interpretability script',
         default='interpretability/interp_configs/i_debug_GPT-neo.yaml',
     )
+    parser.add_argument(
+        '-s', '--start_from', 
+        required=False, 
+        help='Start from n-th iteration (used to jump ahead in the dataset in case of attribution already done in a previous backup). Defaults to 0',
+        type=int,
+        default=0,
+    )
+
     
     args = parser.parse_args()
 
     model_config = read_config(args.model_config)
     interp_config = read_config(args.interp_config)
 
-    main(model_config, interp_config)
+    if args.start_from > 0:
+        assert interp_config['data']['subset_size'] == 0, f'Sampling is not supported when using backups (-s | --start_from must be {0}. Now: {args.start_from})'
+
+    main(model_config, interp_config, args.start_from)

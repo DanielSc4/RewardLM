@@ -10,9 +10,6 @@ script_settings:
   backup_freq: 200   # backup every backup_freq attribution
 
 data:
-  # Start from n-th iteration (used to jump ahead in the dataset in case of attribution already done in a previous backup). Defaults to 0
-  start_from: 0
-
   # If 0, sampling is not applied. Defaults to 0
   subset_size: 0
   # Stratified sampling samples from the original dataset
