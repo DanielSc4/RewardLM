@@ -85,7 +85,7 @@ def get_plot_prompt_dep_toxicity(dependancies: np.array, attr_labels: np.array, 
     if not fig_kwargs:
         fig_kwargs = {
             'figsize': (9, 6),
-            'dpi': 150,
+            'dpi': 250,
         }
 
     fig, ax = plt.subplots(**fig_kwargs)
@@ -113,7 +113,7 @@ def get_plot_prompt_dep_toxicity(dependancies: np.array, attr_labels: np.array, 
             # label = f'{.95 if z == 1.96 else "z = " + z } confidence interval',
         )
 
-    ax.set_ylim(0, 1.1)
+    ax.set_ylim(0.19, 1.1)
     ax.legend()
     ax.set_xlabel(r'$n$ generated tokens')
     ax.set_ylabel('prompt dependancy (sum)')
@@ -142,7 +142,7 @@ def get_plot_training_compare(dependencies: dict, model_name:str, fig_kwargs: di
     if not fig_kwargs:
         fig_kwargs = {
             'figsize': (9, 6),
-            'dpi': 150,
+            'dpi': 250,
         }
     
     fig, ax = plt.subplots(**fig_kwargs)
@@ -169,7 +169,7 @@ def get_plot_training_compare(dependencies: dict, model_name:str, fig_kwargs: di
             # label = f'{.95 if z == 1.96 else "z = " + z } confidence interval',
         )
     
-    ax.set_ylim(0, 1.1)
+    ax.set_ylim(0.19, 1.1)
     ax.set_xlabel(r'$n$ generated tokens')
     ax.set_ylabel('prompt dependancy (sum)')
     ax.legend()
