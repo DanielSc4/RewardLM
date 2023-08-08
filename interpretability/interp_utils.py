@@ -1,13 +1,13 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import warnings
 
 from inseq import FeatureAttributionOutput
 
 # plot color palette
 palette = ['#2D3047', '#576490', '#7796CB', '#A3BCF9', '#D1D2F9', '#C9CAD9', '#B7B8C5', '#FCB97D']
 diversity_palette = ['#2D3047', '#7796CB', '#FCB97D', '#E54F6D', '#79C99E', '#A9F0D1',]
-diversity_palette_ord = ['#7796CB', '#79C99E', '#FCB97D', '#E54F6D', '#2D3047', '#A9F0D1',]
 
 
 def _assign_label(value):
@@ -30,6 +30,21 @@ def stratify_df(df: pd.DataFrame, subset_size):
             ) for lbl, group in df.groupby('label')
     ])
     return stratified_df
+
+
+def _get_offsets_ci(dependencies: np.array, z = 1.96):
+    r"""Return confidence interval offsets for dependencies
+
+    Args:
+        dependencies (`np.array`): dependencies of shape `(n, n_tokens)` where `n` is the number of records.
+        z (`float`, optional): Z parameter, (`1.96` for 95%, `2.58` for 99%). Defaults to `1.96`.
+
+    Returns:
+        `np.array`: array of offsets of shape `(1, n_tokens)`
+    """
+    offsets = np.nanstd(dependencies, axis = 0) / np.sqrt(np.invert(np.isnan(dependencies)).sum(axis = 0))
+    offsets *= z
+    return offsets
 
 
 def get_prompt_dependancy(attributions: FeatureAttributionOutput, max_n_tok: int = 50,):
@@ -95,10 +110,8 @@ def get_plot_prompt_dep_toxicity(dependancies: np.array, attr_labels: np.array, 
         group = dependancies[(attr_labels == np.unique(attr_labels))[:, i]]
 
         avgs = np.nanmean(group, axis = 0)
-        # ci = (1.96 for 95%, 2.58 for 99%) * z * (std / sqrt(len(data)))  # counting how many not na values there are
-        z = 1.96
-        offsets = z * np.nanstd(group, axis = 0) / np.sqrt(np.invert(np.isnan(group)).sum(axis = 0))
         
+        offsets = _get_offsets_ci(group)
         ax.plot(
             np.arange(0, len(avgs)),
             avgs,
@@ -110,7 +123,6 @@ def get_plot_prompt_dep_toxicity(dependancies: np.array, attr_labels: np.array, 
             (avgs - offsets),
             (avgs + offsets),
             color = color, alpha = .08,
-            # label = f'{.95 if z == 1.96 else "z = " + z } confidence interval',
         )
 
     ax.set_ylim(0.19, 1.1)
@@ -134,6 +146,7 @@ def get_plot_training_compare(dependencies: dict, model_name:str, fig_kwargs: di
     Returns:
         `matplotlib.pyplot`: same as description.
     """
+    local_palette = diversity_palette[1], diversity_palette[4], diversity_palette[2], diversity_palette[3]
     
     # check
     exp_keys = ['PT', 'FT', 'RL']
@@ -148,12 +161,9 @@ def get_plot_training_compare(dependencies: dict, model_name:str, fig_kwargs: di
     fig, ax = plt.subplots(**fig_kwargs)
     ax.set_title(f'[{model_name}], Prompt dependancy, PT vs FT vs RL')
 
-
-    for k, color in zip(dependencies, diversity_palette_ord):
+    for k, color in zip(dependencies, local_palette):
         avgs = np.nanmean(dependencies[k], axis = 0)
-        # ci = (1.96 for 95%, 2.58 for 99%) * z * (std / sqrt(len(data)))  # counting how many not na values there are
-        z = 1.96
-        offsets = z * np.nanstd(dependencies[k], axis = 0) / np.sqrt(np.invert(np.isnan(dependencies[k])).sum(axis = 0))
+        offsets = _get_offsets_ci(dependencies[k])
 
         ax.plot(
             np.arange(0, len(avgs)),
@@ -166,7 +176,6 @@ def get_plot_training_compare(dependencies: dict, model_name:str, fig_kwargs: di
             (avgs - offsets),
             (avgs + offsets),
             color = color, alpha = .15,
-            # label = f'{.95 if z == 1.96 else "z = " + z } confidence interval',
         )
     
     ax.set_ylim(0.19, 1.1)
@@ -175,4 +184,82 @@ def get_plot_training_compare(dependencies: dict, model_name:str, fig_kwargs: di
     ax.legend()
     ax.grid(alpha = .3, linestyle = ':')
     
+    return plt
+
+
+def get_plot_toxlev2toxlev(deps, lbls, start: str, end: str, model_name: str, fig_kwargs: dict = None):
+    # assert start in lbls_1, f'start ({start}) must be in lbls_1'
+    # assert end in lbls_2, f'end ({end}) must be in lbls_2'
+    
+    assert deps.keys() == lbls.keys(), f'deps ({deps.keys()}) and lbls ({lbls.keys()}) not having the same keys.'
+    assert len(deps.keys()) == 2, f'deps and lbls must have {2} keys ({len(deps.keys())} were given).'
+
+    local_palette = diversity_palette[1], diversity_palette[4], diversity_palette[2], diversity_palette[3]
+
+    if not fig_kwargs:
+        fig_kwargs = {
+            'figsize': (9, 6),
+            'dpi': 250,
+        }
+    
+    fig, ax = plt.subplots(**fig_kwargs)
+
+    first_key, second_key = lbls.keys()
+    if lbls[first_key].shape != lbls[second_key].shape:
+        warnings.warn(f'Labels not matching in shape ({lbls[first_key].shape} and {lbls[second_key].shape}). Using the lowest dimension between the two, cutting away the end of the biggest label set.')
+        lowest_dim = min(
+            lbls[first_key].shape[0],
+            lbls[second_key].shape[0],
+        )
+        lbls[first_key], lbls[second_key] = lbls[first_key][:lowest_dim], lbls[second_key][:lowest_dim]
+        deps[first_key], deps[second_key] = deps[first_key][:lowest_dim], deps[second_key][:lowest_dim]
+    indexes = ((lbls[first_key] == start) & (lbls[second_key] == end)).flatten()
+    
+    if not indexes.sum() > 0:
+        print(f'No instance of {start}2{end} found.')
+
+    ax.set_title(f'[{model_name}], Prompt dependancy, toxicity: {first_key}.{start} -> {second_key}.{end}')
+
+    ## first line (start)
+    d = deps[first_key][indexes]
+    avgs = np.nanmean(d, axis = 0)
+    ax.plot(
+        np.arange(0, len(avgs)),
+        avgs,
+        label = f'{first_key} {start} toxicity',
+        color = local_palette[0],
+    )
+
+    offsets = _get_offsets_ci(d)
+    ax.fill_between(
+        np.arange(0, len(avgs)),
+        (avgs - offsets),
+        (avgs + offsets),
+        color = local_palette[0], alpha = .15,
+    )
+
+    ## second line (end)
+    d = deps[second_key][indexes]
+    avgs = np.nanmean(d, axis = 0)
+    ax.plot(
+        np.arange(0, len(avgs)),
+        avgs,
+        label = f'{second_key} {end} toxicity',
+        color = local_palette[1],
+    )
+
+    offsets = _get_offsets_ci(d)
+    ax.fill_between(
+        np.arange(0, len(avgs)),
+        (avgs - offsets),
+        (avgs + offsets),
+        color = local_palette[0], alpha = .15,
+    )
+
+    ax.set_ylim(0.19, 1.1)
+    ax.set_xlabel(r'$n$ generated tokens')
+    ax.set_ylabel('prompt dependancy (sum)')
+    ax.legend()
+    ax.grid(alpha = .3, linestyle = ':')
+
     return plt

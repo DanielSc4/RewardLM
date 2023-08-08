@@ -34,8 +34,8 @@ echo "[PT]"
 python $SCRIPT_NAME -m configs/falcon7B.yaml -i interpretability/interp_configs/i_debug_prod.yaml
 # echo "[FT]"
 # python $SCRIPT_NAME -m configs/falcon7b-FT.yaml -i interpretability/interp_configs/i_debug_prod.yaml
-echo "[RL]"
-python $SCRIPT_NAME -m configs/falcon7b-RL.yaml -i interpretability/interp_configs/i_debug_prod.yaml
+# echo "[RL]"
+# python $SCRIPT_NAME -m configs/falcon7b-RL.yaml -i interpretability/interp_configs/i_debug_prod.yaml
 
 
 echo "Done!"
