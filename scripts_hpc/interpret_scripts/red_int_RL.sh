@@ -2,7 +2,7 @@
 #SBATCH --job-name=red_int_RL
 #SBATCH --time=40:00:00
 #SBATCH --mem=70GB
-#SBATCH --gpus-per-node=a100.20gb:1
+#SBATCH --gpus-per-node=a100:1
 #SBATCH --output=/home1/p313544/slurm_logs/%x.%j.out
 
 
@@ -35,7 +35,7 @@ cd $PATH_TO_PRJ
 # echo "[FT]"
 # python $SCRIPT_NAME -m configs/RedPajama-INCITE-Chat-3B-LoRA-FT.yaml -i interpretability/interp_configs/i_debug_prod.yaml
 echo "[RL]"
-python $SCRIPT_NAME -m configs/RedPajama-INCITE-Chat-3B-LoRA-RL.yaml -i interpretability/interp_configs/i_debug_prod.yaml
+python $SCRIPT_NAME -m configs/RedPajama-INCITE-Chat-3B-LoRA-RL.yaml -i interpretability/interp_configs/i_debug_prod.yaml -s 2800
 
 
 
