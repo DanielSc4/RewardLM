@@ -17,3 +17,4 @@ einops
 git+https://github.com/inseq-team/inseq.git
 google-api-python-client
 psutil
+colorgetter

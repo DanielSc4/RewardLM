@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import warnings
+import colorgetter as cg
 
 from inseq import FeatureAttributionOutput
 
@@ -216,11 +217,8 @@ def get_plot_toxlev2toxlev(deps: dict, lbls: dict, from_to: list[tuple[str]], mo
     assert [item in lbls[first_key] for item in np.unique([ele[0] for ele in from_to])], f'found key in from_to not in lbls [0 dim].'
     assert [item in lbls[second_key] for item in np.unique([ele[1] for ele in from_to])], f'found key in from_to not in lbls [1 dim].'
 
-    local_palette = diversity_palette[1], diversity_palette[4], diversity_palette[2], diversity_palette[3], diversity_palette[0], diversity_palette[5]
+    local_palette = diversity_palette[1], diversity_palette[4], diversity_palette[2], diversity_palette[3], diversity_palette[5], diversity_palette[0]
     
-    def _pairwise(iterable):
-        a = iter(iterable)
-        return zip(a, a)
 
     if not fig_kwargs:
         fig_kwargs = {
@@ -245,7 +243,7 @@ def get_plot_toxlev2toxlev(deps: dict, lbls: dict, from_to: list[tuple[str]], mo
     ax.set_title(f'[{model_name}] {first_key} -> {second_key}, Prompt dependancy')
 
     
-    for (color_s, color_e), (start, end) in zip(_pairwise(local_palette), from_to):
+    for color_s, (start, end) in zip(local_palette, from_to):
         indexes = ((lbls[first_key] == start) & (lbls[second_key] == end)).flatten()
     
         if not indexes.sum() > 0:
@@ -259,7 +257,6 @@ def get_plot_toxlev2toxlev(deps: dict, lbls: dict, from_to: list[tuple[str]], mo
                 avgs,
                 label = f'{first_key} {start} -> {second_key} {end} ({first_key})',
                 color = color_s,
-                ls = '--'
             )
 
             offsets = _get_offsets_ci(d)
@@ -271,6 +268,11 @@ def get_plot_toxlev2toxlev(deps: dict, lbls: dict, from_to: list[tuple[str]], mo
             )
 
             ## second line (end)
+            color_e = cg.rgb_to_hex(     # getting (two times) darker color
+                *cg.darker(*cg.darker(
+                    *cg.hex_to_rgb(color_s)
+                ))
+            )
             d = deps[second_key][indexes]
             avgs = np.nanmean(d, axis = 0)
             ax.plot(
@@ -278,6 +280,7 @@ def get_plot_toxlev2toxlev(deps: dict, lbls: dict, from_to: list[tuple[str]], mo
                 avgs,
                 label = f'{first_key} {start} -> {second_key} {end} ({second_key})',
                 color = color_e,
+                ls = '--',
             )
 
             offsets = _get_offsets_ci(d)
