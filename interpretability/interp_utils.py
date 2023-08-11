@@ -298,3 +298,43 @@ def get_plot_toxlev2toxlev(deps: dict, lbls: dict, from_to: list[tuple[str]], mo
     ax.grid(alpha = .3, linestyle = ':')
 
     return plt
+
+
+def get_plot_kl(kls: dict, model_name: str, fig_kwargs: dict = None):
+
+    local_palette = diversity_palette[1], diversity_palette[4], diversity_palette[2], diversity_palette[3]
+
+    if not fig_kwargs:
+        fig_kwargs = {
+            'figsize': (9, 6),
+            'dpi': 250,
+        }
+
+    fig, ax = plt.subplots(**fig_kwargs)
+    ax.set_title(f'[{model_name}] Measured KL div. between prompt scores')
+    
+    for k, color in zip(kls, local_palette):
+        avgs = np.nanmean(kls[k], axis = 0)
+        offsets = _get_offsets_ci(kls[k])
+
+        ax.plot(
+            np.arange(0, len(avgs)),
+            avgs,
+            label = k,
+            color = color
+        )
+
+        ax.fill_between(
+            np.arange(0, len(avgs)),
+            (avgs - offsets),
+            (avgs + offsets),
+            color = color, alpha = .15,
+        )
+
+    ax.set_ylim(0.0, .6)
+    ax.set_xlabel(r'$n$ generated tokens')
+    ax.set_ylabel('KL divergence on prompt scores')
+    ax.legend()
+    ax.grid(alpha = .3, linestyle = ':')
+    
+    return plt
