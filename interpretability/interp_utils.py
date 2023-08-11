@@ -71,7 +71,7 @@ def get_prompt_dependancy(attributions: FeatureAttributionOutput, max_n_tok: int
                 np.array([
                     attr_matrix[:len(attr.source), n_tok].sum().item()      # sum the column for each generated token (entrire column (prompt + gen) sums to one)
                     if n_tok < attr_matrix.shape[1] else np.nan             # nan is left where generations length is less than max_n_tok
-                    for n_tok in range(max_n_tok)       # each generated token
+                    for n_tok in range(max_n_tok)                           # each generated token
                 ])
             ))
     
@@ -179,7 +179,7 @@ def get_plot_training_compare(dependencies: dict, model_name:str, fig_kwargs: di
             color = color, alpha = .15,
         )
     
-    ax.set_ylim(0.19, 1.1)
+    # ax.set_ylim(0.19, 1.1)
     ax.set_xlabel(r'$n$ generated tokens')
     ax.set_ylabel('prompt dependancy (sum)')
     ax.legend()
@@ -291,7 +291,7 @@ def get_plot_toxlev2toxlev(deps: dict, lbls: dict, from_to: list[tuple[str]], mo
                 color = color_e, alpha = .12,
             )
 
-    ax.set_ylim(0.19, 1.1)
+    # ax.set_ylim(0.19, 1.1)
     ax.set_xlabel(r'$n$ generated tokens')
     ax.set_ylabel('prompt dependancy (sum)')
     ax.legend()

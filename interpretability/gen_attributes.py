@@ -200,7 +200,7 @@ def main(model_config, interp_config, start_from):
                 # batch_size = config['inference_batch_size'],
                 show_progress = False,      # decluttering logs
                 pretty_progress = False,
-            ).aggregate("subwords", special_symbol=("Ġ", "Ċ")).aggregate()      # output aggregation to store only a G x T matrix (to show -> do_aggregation=False)
+            ).aggregate("subwords", special_symbol=("Ġ", "Ċ")).aggregate()     # output aggregation to store only a G x T matrix (to show -> do_aggregation=False)
         )
         list_of_lbls.append(assigned_label)
 
