@@ -52,7 +52,7 @@ def _get_offsets_ci(dependencies: np.array, z = 1.96):
     return offsets
 
 
-def get_prompt_dependancy(attributions: FeatureAttributionOutput, max_n_tok: int = 50,):
+def get_prompt_dependancy(attributions: FeatureAttributionOutput, max_n_tok: int = 50):
     r"""Compute prompt token level dependancy for each generation in attributions
     Notice: generation dependancy can be calculated as `1 - prompt_dependancy`.
 
@@ -308,7 +308,7 @@ def get_plot_toxlev2toxlev(deps: dict, lbls: dict, from_to: list[tuple[str]], mo
 
 def prompt_kl_divergence(attributions_p, attributions_q, max_n_tok = 50):
     def kl_divergence(p, q):
-        tot_sum = np.sum([p[i] * np.log2(p[i] / q[i]) for i in range(len(p))])
+        tot_sum = np.nansum([p[i] * np.log2(p[i] / q[i]) for i in range(len(p))])
         return tot_sum
 
     kls = []
@@ -321,8 +321,8 @@ def prompt_kl_divergence(attributions_p, attributions_q, max_n_tok = 50):
         kls.append(
             np.array([
                 kl_divergence(
-                    p = p_prompt_matrix[:, n_tok] / sum(p_prompt_matrix[:, n_tok]),
-                    q = q_prompt_matrix[:, n_tok] / sum(p_prompt_matrix[:, n_tok]),
+                    p = p_prompt_matrix[:, n_tok] / np.nansum(p_prompt_matrix[:, n_tok]),
+                    q = q_prompt_matrix[:, n_tok] / np.nansum(p_prompt_matrix[:, n_tok]),
                 ) if n_tok < min(p_prompt_matrix.shape[1], q_prompt_matrix.shape[1]) else np.nan 
                 for n_tok in range(max_n_tok)
             ])
