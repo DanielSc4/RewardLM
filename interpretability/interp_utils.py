@@ -3,8 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import warnings
 import colorgetter as cg
+import numpy as np
 
 from inseq import FeatureAttributionOutput
+from tqdm import tqdm
 
 # plot color palette
 palette = ['#2D3047', '#576490', '#7796CB', '#A3BCF9', '#D1D2F9', '#C9CAD9', '#B7B8C5', '#FCB97D']
@@ -16,8 +18,10 @@ def _assign_label(value):
         return 'low'
     if value >= 0.333 and value <= 0.666:
         return 'mid'
-    else:
+    if value > 0.66 and value <= 1:
         return 'high'
+    else:
+        return np.nan
     
 
 def stratify_df(df: pd.DataFrame, subset_size):
@@ -298,6 +302,35 @@ def get_plot_toxlev2toxlev(deps: dict, lbls: dict, from_to: list[tuple[str]], mo
     ax.grid(alpha = .3, linestyle = ':')
 
     return plt
+
+
+
+
+def prompt_kl_divergence(attributions_p, attributions_q, max_n_tok = 50):
+    def kl_divergence(p, q):
+        tot_sum = np.sum([p[i] * np.log2(p[i] / q[i]) for i in range(len(p))])
+        return tot_sum
+
+    kls = []
+    for attr_p, attr_q in tqdm(zip(attributions_p, attributions_q), total = len(attributions_p)):
+        assert len(attr_p.source) == len(attr_q.source), f'Prompts are not the same lenght. Got {len(attr_p.source)} and {len(attr_q.source)}'
+
+        p_prompt_matrix = attr_p.target_attributions[:len(attr_p.source), :]
+        q_prompt_matrix = attr_q.target_attributions[:len(attr_q.source), :]
+
+        kls.append(
+            np.array([
+                kl_divergence(
+                    p = p_prompt_matrix[:, n_tok] / sum(p_prompt_matrix[:, n_tok]),
+                    q = q_prompt_matrix[:, n_tok] / sum(p_prompt_matrix[:, n_tok]),
+                ) if n_tok < min(p_prompt_matrix.shape[1], q_prompt_matrix.shape[1]) else np.nan 
+                for n_tok in range(max_n_tok)
+            ])
+        )
+
+    return np.array(kls)
+
+
 
 
 def get_plot_kl(kls: dict, model_name: str, fig_kwargs: dict = None):
