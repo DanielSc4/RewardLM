@@ -44,6 +44,17 @@ def get_real_toxicity_prompts(toxicity_threshold: float = .5):
     return new_data
 
 
+def get_mutlitarget_CONAN():
+    """Get multitarget CONAN dataset filtered with unique prompts. Default dataset path: `data/Unique-Multitarget-CONAN.csv`.
+
+    Returns:
+        list[str]: list of prompts
+    """
+    default_dir = 'data/Unique-Multitarget-CONAN.csv'
+    df = pd.read_csv(default_dir, index_col=0)
+    return df['HATE_SPEECH'].to_list()
+
+
 def download_DIALOCONAN():
     CSV_URL = 'https://raw.githubusercontent.com/marcoguerini/CONAN/master/DIALOCONAN/DIALOCONAN.csv'
     return pd.read_csv(CSV_URL)

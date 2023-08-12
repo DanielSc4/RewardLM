@@ -1,7 +1,7 @@
 import torch
 from rewardlm.core.GenerativeModel import GenerativeModel
 from rewardlm.ToxicityMeter import ToxicityMeter
-from rewardlm.data.data_utils import get_real_toxicity_prompts
+from rewardlm.data.data_utils import get_real_toxicity_prompts, get_mutlitarget_CONAN
 from rewardlm.utils import load_config
 
 from argparse import ArgumentParser
@@ -33,7 +33,8 @@ def main(config_name: str):
                     config['generation']['custom_prompt']['bot_name'] + ' '
                     )
 
-    df = get_real_toxicity_prompts()
+    # df = get_real_toxicity_prompts()  # old
+    df = get_mutlitarget_CONAN()        # new
     toxicity_df = toxicity_meter.measure_toxicity(
         text_prompt=df if not config['data']['subset'] else df[:config['data']['subset_size']],
         custom_prompt=custom_prompt,
@@ -43,7 +44,7 @@ def main(config_name: str):
 
     # save csv in tmp folder
     fldr = './results/new_prompts'
-    toxicity_df.to_csv(fldr + f'/measured_tox_{config["model_label"]}_{config["model_id"].split("/")[-1]}.csv')
+    toxicity_df.to_csv(fldr + f'/CONAN_measured_tox_{config["model_label"]}_{config["model_id"].split("/")[-1]}.csv')
 
 
 
