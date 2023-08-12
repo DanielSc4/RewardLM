@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --job-name=tox_meter_red
-#SBATCH --time=03:00:00
+#SBATCH --job-name=tox_meter_falcon_FT
+#SBATCH --time=6:00:00
 #SBATCH --mem=30GB
 #SBATCH --gpus-per-node=a100.20gb:1
 #SBATCH --output=/home1/p313544/slurm_logs/%x.%j.out
@@ -31,11 +31,11 @@ export PATH_TO_STORAGE=/scratch/p313544/storage_cache/ret_toxicity
 cd $PATH_TO_PRJ
 echo "Executing 3 python script..."
 echo "[PT]"
-python $SCRIPT_NAME -c RedPajama-INCITE-Chat-3B-v1
-echo "[FT]"
-python $SCRIPT_NAME -c RedPajama-INCITE-Chat-3B-LoRA-FT
-echo "[RL]"
-python $SCRIPT_NAME -c RedPajama-INCITE-Chat-3B-LoRA-RL
+python $SCRIPT_NAME -c falcon7B
+# echo "[FT]"
+# python $SCRIPT_NAME -c falcon7b-FT
+# echo "[RL]"
+# python $SCRIPT_NAME -c falcon7b-RL
 
 
 echo "Done!"
