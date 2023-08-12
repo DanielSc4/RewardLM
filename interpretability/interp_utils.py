@@ -308,6 +308,8 @@ def get_plot_toxlev2toxlev(deps: dict, lbls: dict, from_to: list[tuple[str]], mo
 
 def prompt_kl_divergence(attributions_p, attributions_q, max_n_tok = 50):
     def kl_divergence(p, q):
+        assert (sum(p) > 0.9) and sum(p) < 1.1, f'p distribution should sum to 1, now {sum(p)}'
+        assert (sum(q) > 0.9) and sum(q) < 1.1, f'q distribution should sum to 1, now {sum(q)}'
         tot_sum = np.nansum([p[i] * np.log2(p[i] / q[i]) for i in range(len(p))])
         return tot_sum
 
@@ -322,7 +324,7 @@ def prompt_kl_divergence(attributions_p, attributions_q, max_n_tok = 50):
             np.array([
                 kl_divergence(
                     p = p_prompt_matrix[:, n_tok] / np.nansum(p_prompt_matrix[:, n_tok]),
-                    q = q_prompt_matrix[:, n_tok] / np.nansum(p_prompt_matrix[:, n_tok]),
+                    q = q_prompt_matrix[:, n_tok] / np.nansum(q_prompt_matrix[:, n_tok]),
                 ) if n_tok < min(p_prompt_matrix.shape[1], q_prompt_matrix.shape[1]) else np.nan 
                 for n_tok in range(max_n_tok)
             ])
