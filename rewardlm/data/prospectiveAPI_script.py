@@ -47,7 +47,11 @@ def main(path_to_df):
     n_response = 0
 
     for _ in range(TRIALS):
-        pbar = pbar = tqdm(enumerate(df.iterrows()), desc=f"status: {get_status(df)} | from last backup: {n_response} | last_backup: NaN")
+        pbar = pbar = tqdm(
+            enumerate(df.iterrows()), 
+            desc=f"status: {get_status(df)} | from last backup: {n_response} | last_backup: NaN",
+            total = len(df),
+        )
         
         for it, (idx, row) in pbar:
             # if score is not assigned:
