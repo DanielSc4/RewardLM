@@ -308,8 +308,8 @@ def get_plot_toxlev2toxlev(deps: dict, lbls: dict, from_to: list[tuple[str]], mo
 
 def prompt_kl_divergence(attributions_p, attributions_q, max_n_tok = 50):
     def kl_divergence(p, q):
-        assert (sum(p) > 0.9) and sum(p) < 1.1, f'p distribution should sum to 1, now {sum(p)}'
-        assert (sum(q) > 0.9) and sum(q) < 1.1, f'q distribution should sum to 1, now {sum(q)}'
+        assert (np.nansum(p) > 0.9) and np.nansum(p) < 1.1, f'p distribution should sum to 1, now {np.nansum(p)}'
+        assert (np.nansum(q) > 0.9) and np.nansum(q) < 1.1, f'q distribution should sum to 1, now {np.nansum(q)}'
         tot_sum = np.nansum([p[i] * np.log2(p[i] / q[i]) for i in range(len(p))])
         return tot_sum
 
@@ -352,10 +352,11 @@ def get_plot_kl(kls: dict, model_name: str, fig_kwargs: dict = None):
         avgs = np.nanmean(kls[k], axis = 0)
         offsets = _get_offsets_ci(kls[k])
 
+        name, training_type = k.split("_")
         ax.plot(
             np.arange(0, len(avgs)),
             avgs,
-            label = k,
+            label = f'KL {name}: {training_type}',
             color = color
         )
 
@@ -373,3 +374,90 @@ def get_plot_kl(kls: dict, model_name: str, fig_kwargs: dict = None):
     ax.grid(alpha = .3, linestyle = ':')
     
     return plt
+
+
+
+def get_plot_KL_toxlev2toxlev(kls: dict, lbls: dict, from_to: dict[str, list[tuple[str]]], model_name: str, fig_kwargs: dict[str] = None):
+    """Plot prompt KL divergence stored in kls comparing different models with their training methods.
+
+    Args:
+        kls (`dict[str, np.ndarray]`): KL divergences. Keys must respect the following format `modelname_traintype1-traintype2` where
+            the corresponding value represent the `modelname` KL calculated between its `traintype1` and `traintype2` version.
+        lbls (`dict[str, dict[str, np.ndarray]]`): labels where the key follows the patter `lbls[modelname][traintype*]`.
+        from_to (`dict[str, list[tuple[str]]]`): dict having the same keys of kls. Values are list of tuples, each tuple
+            indicating the indexes to select and the following line to plot based on toxicity level (high, mid, low).
+        model_name (`str`): model name for title.
+        fig_kwargs (`dict[str]`): figure kwargs. Default to `'figsize': (9, 6)` and `'dpi': 200`.
+    """
+
+    # keys format: 'modelname_traintype1-traintype2'
+    
+    # assert kls.keys() == lbls.keys(), f'KLs ({kls.keys()}) and lbls ({lbls.keys()}) not having the same keys.'
+    # assert kls.keys() == from_to.keys(), f'KLs ({kls.keys()}) and from_to ({from_to.keys()}) not having the same keys.'
+    
+    assert all([k in kls.keys() for k in from_to.keys()]), f'all keys in from_to must be in kls keys. {from_to.keys()} were given.'
+    for x in from_to.values():
+        for t in x:
+            assert isinstance(t, tuple), f'all values in from_to must be a list of tuples, {from_to.values()} were given.'
+            assert len(t) == 2, f'all tuples in from_to must be of len {2}, {from_to.values()} were given.'
+    
+    local_palette = diversity_palette[1], diversity_palette[4], diversity_palette[2], diversity_palette[3], diversity_palette[5], diversity_palette[0]
+    
+    if not fig_kwargs:
+        fig_kwargs = {
+            'figsize': (9, 6),
+            'dpi': 200,
+        }
+    fig, ax = plt.subplots(**fig_kwargs)
+    ax.set_title(f'[{model_name}], KL divergence, toxicity levels comparasion')
+
+    # for key (KL model PT FT)
+        # for group label (low -> high, high -> high)
+            # line
+    for k in from_to:
+        name, training_type = k.split("_")
+        # select corresponding keys
+        first_key, second_key = training_type.split('-')
+        
+        # in case PT, FT or RL do not match in shape
+        if lbls[name][first_key].shape != lbls[name][second_key].shape:
+            lowest_dim = min(
+                lbls[name][first_key].shape[0],
+                lbls[name][second_key].shape[0],
+            )
+            warnings.warn(
+                f'Labels (and KLs) not matching in shape ({lbls[name][first_key].shape} and {lbls[name][second_key].shape}). Using the lowest dimension between the two ({lowest_dim}), cutting away the end of the biggest label set.'
+            )
+            lbls[name][first_key], lbls[name][second_key] = lbls[name][first_key][:lowest_dim], lbls[name][second_key][:lowest_dim]
+            kls[k] = kls[k][:lowest_dim]
+
+        for color, (start, end) in zip(local_palette, from_to[k]):
+            indexes = ((lbls[name][first_key] == start) & (lbls[name][second_key] == end)).flatten()
+            if not indexes.sum() > 0:
+                warnings.warn(f'No instance of {start}2{end} found, jumping line plot')
+            else:
+                kl_values = kls[k][indexes]
+                avgs = np.nanmean(kl_values, axis=0)
+                ax.plot(
+                    np.arange(0, len(avgs)),
+                    avgs,
+                    label = f'KL div. {name}: {start}{first_key} -> {end}{second_key}',
+                    color = color,
+                )
+                offsets = _get_offsets_ci(kl_values)
+                ax.fill_between(
+                    np.arange(0, len(avgs)),
+                    (avgs - offsets),
+                    (avgs + offsets),
+                    color = color,
+                    alpha = .08,
+                )
+                
+    ax.set_xlabel(r'$n$ generated tokens')
+    ax.set_ylabel('KL divergence, avg')
+    ax.legend()
+    ax.grid(alpha = .3, linestyle = ':')
+
+    return plt
+
+
