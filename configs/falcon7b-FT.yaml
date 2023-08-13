@@ -30,7 +30,7 @@ RL_args:
     gradient_accumulation_steps: 2
 
 LoRA_config:
-  r: 32                   # the rank of the update matrices. Lower -> fewer trainable params
+  r: 64                  # the rank of the update matrices. Lower -> fewer trainable params
   lora_alpha: 32          # LoRA scaling factor
   target_modules:
     - "query_key_value"
