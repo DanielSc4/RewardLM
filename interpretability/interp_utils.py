@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import warnings
 import colorgetter as cg
 import numpy as np
+from scipy.stats import entropy
 
 from inseq import FeatureAttributionOutput
 from tqdm import tqdm
@@ -129,7 +130,7 @@ def get_plot_prompt_dep_toxicity(dependancies: np.array, attr_labels: np.array, 
             (avgs + offsets),
             color = color, alpha = .08,
         )
-
+    # TODO: check how to set ylim:
     ax.set_ylim(0.19, 1.1)
     ax.legend()
     ax.set_xlabel(r'$n$ generated tokens')
@@ -140,11 +141,12 @@ def get_plot_prompt_dep_toxicity(dependancies: np.array, attr_labels: np.array, 
 
 
 
-def get_plot_training_compare(dependencies: dict, model_name:str, fig_kwargs: dict = None):
-    """Plot prompt dependancy comparing different type of training, Pre-Trained, Fine-Tuned and Reinforcement Learning.
+def get_plot_training_compare(measurements: dict, model_name:str, metric_name: str, fig_kwargs: dict = None):
+    """Plot prompt dependancy | entropy | any metric with shape `(n_attributions, num_of_tokens)` 
+    comparing different type of training, Pre-Trained, Fine-Tuned and Reinforcement Learning.
 
     Args:
-        - `dependencies` (`np.array`): prompt dependancies obtained from `get_prompt_dependancy` fun.
+        - `measurements` (`np.array`): measurements obtained from `get_prompt_dependancy` | `get_prompt_shannon_entropy` | ... functions.
         - `model_name` (`str`): name of the model (title).
         - `fig_kwargs` (`dict`): figure kwargs. Defaults to None.
 
@@ -164,11 +166,11 @@ def get_plot_training_compare(dependencies: dict, model_name:str, fig_kwargs: di
         }
     
     fig, ax = plt.subplots(**fig_kwargs)
-    ax.set_title(f'[{model_name}], Prompt dependancy, PT vs FT vs RL')
+    ax.set_title(f'[{model_name}], {metric_name}, PT vs FT vs RL')
 
-    for k, color in zip(dependencies, local_palette):
-        avgs = np.nanmean(dependencies[k], axis = 0)
-        offsets = _get_offsets_ci(dependencies[k])
+    for k, color in zip(measurements, local_palette):
+        avgs = np.nanmean(measurements[k], axis = 0)
+        offsets = _get_offsets_ci(measurements[k])
 
         ax.plot(
             np.arange(0, len(avgs)),
@@ -461,3 +463,23 @@ def get_plot_KL_toxlev2toxlev(kls: dict, lbls: dict, from_to: dict[str, list[tup
     return plt
 
 
+
+
+def get_prompt_shannon_entropy(attributions: FeatureAttributionOutput, max_n_token: int = 50):
+    """Return shannon entropy for each attribution in `attributions`.
+
+    Args:
+        attributions (`inseq.FeatureAttributionOutput`): attributions used to compute the prompt entropy accross each generated token.
+        max_n_tok (`int`, optional): number of maximum generated tokens where dependancy is computed. Defaults to 50.
+
+    Returns:
+        `numpy.ndarray`: entropies numpy array with `[len(attributions), max_n_tok]` shape.
+    """
+    entropies = []
+    for attr in attributions:
+        p_attr_matrix = attr.target_attributions[:len(attr.source)]             # .sum(axis = 0)
+        entr_per_token = entropy(p_attr_matrix / p_attr_matrix.sum(axis = 0), base=2, axis=0)[:max_n_token]      # limit at max n generated token
+        entr_per_token = np.pad(entr_per_token, (0, max_n_token - len(entr_per_token)), 'constant', constant_values=np.nan)
+        entropies.append(entr_per_token)
+    
+    return np.vstack(entropies)
