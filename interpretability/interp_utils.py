@@ -85,23 +85,25 @@ def get_prompt_dependancy(attributions: FeatureAttributionOutput, max_n_tok: int
     return np.array(final)
 
 
-def get_plot_prompt_dep_toxicity(dependancies: np.array, attr_labels: np.array, model_name: str, fig_kwargs: dict = None):
-    r"""Plot average prompt dependancy, distinguishing between the bucket in `attr_labels`.
+def get_plot_prompt_measure_toxicity(measurements: np.array, attr_labels: np.array, model_name: str, measure_name: str, fig_kwargs: dict = None):
+    r"""Plot average prompt dependancy | entropy | any metric with shape `(n_attributions, num_of_tokens)` 
+    distinguishing between the bucket in `attr_labels`.
 
     Args:
-        - `dependancies` (`np.array`): prompt dependancies obtained from `get_prompt_dependancy` fun.
-        - `attr_labels` (`np.array`): array with shape `(n, 1)` where `n` is the number of attributions.
-        - `model_name` (`str`): name of the model (title).
-        - `fig_kwargs` (`dict`): figure kwargs. Defaults to None.
+        measurements (`numpy.ndarray`): prompt dependancies obtained from `get_prompt_dependancy` fun.
+        attr_labels (`numpy.ndarray`): array with shape `(n, 1)` where `n` is the number of attributions.
+        model_name (`str`): name of the model (title).
+        measure_name(`str`): name of the measure (title).
+        fig_kwargs (`dict`): figure kwargs. Defaults to None.
 
     Returns:
-        - `matplotlib.pyplot`: same as description.
+        `matplotlib.pyplot`: same as description.
     """ 
 
     local_palette = diversity_palette[3], diversity_palette[4], diversity_palette[1]
     
     if attr_labels[0]:
-        assert dependancies.shape[0] == len(attr_labels), f"Number of dependancies (0 dim of dependancies: {dependancies.shape[0]}) must be equal to the number of given labels ({len(attr_labels)})"
+        assert measurements.shape[0] == len(attr_labels), f"Number of measurements (0 dim of measurements: {measurements.shape[0]}) must be equal to the number of given labels ({len(attr_labels)})"
 
     if not fig_kwargs:
         fig_kwargs = {
@@ -110,10 +112,10 @@ def get_plot_prompt_dep_toxicity(dependancies: np.array, attr_labels: np.array, 
         }
 
     fig, ax = plt.subplots(**fig_kwargs)
-    ax.set_title(f'[{model_name}], Generation prompt dependancy, avg per toxicity level')
+    ax.set_title(f'[{model_name}], {measure_name}, avg per toxicity level')
 
     for i, (lbl, color) in enumerate(zip(np.unique(attr_labels), local_palette)):
-        group = dependancies[(attr_labels == np.unique(attr_labels))[:, i]]
+        group = measurements[(attr_labels == np.unique(attr_labels))[:, i]]
 
         avgs = np.nanmean(group, axis = 0)
         
@@ -130,8 +132,9 @@ def get_plot_prompt_dep_toxicity(dependancies: np.array, attr_labels: np.array, 
             (avgs + offsets),
             color = color, alpha = .08,
         )
-    # TODO: check how to set ylim:
-    ax.set_ylim(0.19, 1.1)
+
+    if max(avgs) <= 1.1:
+        ax.set_ylim(0.19, 1.1)
     ax.legend()
     ax.set_xlabel(r'$n$ generated tokens')
     ax.set_ylabel('prompt dependancy (sum)')
@@ -141,17 +144,18 @@ def get_plot_prompt_dep_toxicity(dependancies: np.array, attr_labels: np.array, 
 
 
 
-def get_plot_training_compare(measurements: dict, model_name:str, metric_name: str, fig_kwargs: dict = None):
+def get_plot_training_compare(measurements: dict, model_name:str, measure_name: str, fig_kwargs: dict = None):
     """Plot prompt dependancy | entropy | any metric with shape `(n_attributions, num_of_tokens)` 
     comparing different type of training, Pre-Trained, Fine-Tuned and Reinforcement Learning.
 
     Args:
-        - `measurements` (`np.array`): measurements obtained from `get_prompt_dependancy` | `get_prompt_shannon_entropy` | ... functions.
-        - `model_name` (`str`): name of the model (title).
-        - `fig_kwargs` (`dict`): figure kwargs. Defaults to None.
+        measurements (`numpy.ndarray`): measurements obtained from `get_prompt_dependancy` | `get_prompt_shannon_entropy` | ... functions.
+        model_name (`str`): name of the model (title).
+        measure_name(`str`): name of the measure (title).
+        fig_kwargs (`dict`): figure kwargs. Defaults to None.
 
     Returns:
-        - `matplotlib.pyplot`: same as description.
+        matplotlib.pyplot: same as description.
     """
     local_palette = diversity_palette[1], diversity_palette[4], diversity_palette[2], diversity_palette[3]
     
@@ -166,7 +170,7 @@ def get_plot_training_compare(measurements: dict, model_name:str, metric_name: s
         }
     
     fig, ax = plt.subplots(**fig_kwargs)
-    ax.set_title(f'[{model_name}], {metric_name}, PT vs FT vs RL')
+    ax.set_title(f'[{model_name}], {measure_name}, PT vs FT vs RL')
 
     for k, color in zip(measurements, local_palette):
         avgs = np.nanmean(measurements[k], axis = 0)
