@@ -135,6 +135,11 @@ def get_plot_prompt_measure_toxicity(measurements: np.array, attr_labels: np.arr
 
     if max(avgs) <= 1.1:
         ax.set_ylim(0.19, 1.1)
+    # else:
+    #     ax.set_ylim(
+    #         np.floor(min(avgs)),
+    #         np.ceil(min(avgs)),
+    #     )
     ax.legend()
     ax.set_xlabel(r'$n$ generated tokens')
     ax.set_ylabel('prompt dependancy (sum)')
@@ -189,7 +194,13 @@ def get_plot_training_compare(measurements: dict, model_name:str, measure_name: 
             color = color, alpha = .15,
         )
     
-    # ax.set_ylim(0.19, 1.1)
+    if max(avgs) <= 1.1:
+        ax.set_ylim(0.19, 1.1)
+    # else:
+    #     ax.set_ylim(
+    #         np.floor(min(avgs)),
+    #         np.ceil(min(avgs)),
+    #     )
     ax.set_xlabel(r'$n$ generated tokens')
     ax.set_ylabel('prompt dependancy (sum)')
     ax.legend()
@@ -199,16 +210,16 @@ def get_plot_training_compare(measurements: dict, model_name:str, measure_name: 
 
 
 def get_plot_toxlev2toxlev(deps: dict, lbls: dict, from_to: list[tuple[str]], model_name: str, fig_kwargs: dict = None):
-    r"""Plot the prompt dependancy level comparing two different training methods. 
+    """Plot the prompt dependancy level comparing two different training methods. 
     The function selects all generation classified as `from_to[_][0]` by the first model
     and generations classified as `from_to[_][1]` by the second model.
 
     Args:
-        - `deps` (`dict`): Dict with 2 keys naming two different models and their prompt dependancy.
-        - `lbls` (`dict`): Dict with 2 keys naming two different models and their nominal labels
-        - `from_to` (`list[tuple[str]]`): list of tuples. Each tuple contains two string labels.
-        - `model_name` (`str`): Name of the model for title.
-        - `fig_kwargs` (`dict`, optional): figure kwargs. Defaults to None.
+        deps (`dict`): Dict with 2 keys naming two different models and their prompt dependancy.
+        lbls (`dict`): Dict with 2 keys naming two different models and their nominal labels
+        from_to (`list[tuple[str]]`): list of tuples. Each tuple contains two string labels.
+        model_name (`str`): Name of the model for title.
+        fig_kwargs (`dict`, optional): figure kwargs. Defaults to None.
 
     Returns:
         - `matplotlib.pyplot`: same as description.
@@ -301,7 +312,13 @@ def get_plot_toxlev2toxlev(deps: dict, lbls: dict, from_to: list[tuple[str]], mo
                 color = color_e, alpha = .12,
             )
 
-    # ax.set_ylim(0.19, 1.1)
+    if max(avgs) <= 1.1:
+        ax.set_ylim(0.19, 1.1)
+    # else:
+    #     ax.set_ylim(
+    #         np.floor(min(avgs)),
+    #         np.ceil(min(avgs)),
+    #     )
     ax.set_xlabel(r'$n$ generated tokens')
     ax.set_ylabel('prompt dependancy (sum)')
     ax.legend()
