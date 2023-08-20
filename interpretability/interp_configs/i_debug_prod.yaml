@@ -7,7 +7,7 @@ inseq_settings:
 
 
 script_settings:
-  backup_freq: 200   # backup every backup_freq attribution
+  backup_freq: 300   # backup every backup_freq attribution
 
 data:
   # If 0, sampling is not applied. Defaults to 0
