@@ -93,7 +93,7 @@ def get_plot_prompt_measure_toxicity(
         model_name: str, 
         measure_name: str, 
         fig_kwargs: dict = None, 
-        aggregation_fun: Callable = np.nanmean
+        aggregation_fun: Callable = np.nanmean,
     ):
     r"""Plot average prompt dependancy | entropy | any metric with shape `(n_attributions, num_of_tokens)` 
     distinguishing between the bucket in `attr_labels`.
@@ -115,7 +115,7 @@ def get_plot_prompt_measure_toxicity(
     if attr_labels[0]:
         assert measurements.shape[0] == len(attr_labels), f"Number of measurements (0 dim of measurements: {measurements.shape[0]}) must be equal to the number of given labels ({len(attr_labels)})"
 
-    assert isinstance(aggregation_fun, Callable)
+    assert isinstance(aggregation_fun, Callable), f'aggregation_fun must be Callable, {type(aggregation_fun)}, given.'
 
     if not fig_kwargs:
         fig_kwargs = {
@@ -145,7 +145,7 @@ def get_plot_prompt_measure_toxicity(
             color = color, alpha = .08,
         )
 
-    if max(avgs) <= 1.1:
+    if max(avgs) <= 1.1 and aggregation_fun == np.nanmean:
         ax.set_ylim(0.19, 1.1)
     # else:
     #     ax.set_ylim(
@@ -166,7 +166,7 @@ def get_plot_training_compare(
         model_name:str, 
         measure_name: str, 
         fig_kwargs: dict = None, 
-        aggregation_fun: Callable = np.nanmean
+        aggregation_fun: Callable = np.nanmean,
     ):
     """Plot prompt dependancy | entropy | any metric with shape `(n_attributions, num_of_tokens)` 
     comparing different type of training, Pre-Trained, Fine-Tuned and Reinforcement Learning.
@@ -176,11 +176,13 @@ def get_plot_training_compare(
         model_name (`str`): name of the model (title).
         measure_name(`str`): name of the measure (title).
         fig_kwargs (`dict`): figure kwargs. Defaults to None.
+        aggregation_fun (`Callable`): custom function to aggregate results. Defaults to `numpy.nanmean`.
 
     Returns:
         matplotlib.pyplot: same as description.
     """
     local_palette = diversity_palette[1], diversity_palette[4], diversity_palette[2], diversity_palette[3]
+    assert isinstance(aggregation_fun, Callable), f'aggregation_fun must be Callable, {type(aggregation_fun)}, given.'
     
     # check
     exp_keys = ['PT', 'FT', 'RL']
@@ -212,7 +214,7 @@ def get_plot_training_compare(
             color = color, alpha = .15,
         )
     
-    if max(avgs) <= 1.1:
+    if max(avgs) <= 1.1 and aggregation_fun == np.nanmean:
         ax.set_ylim(0.19, 1.1)
     # else:
     #     ax.set_ylim(
@@ -227,7 +229,14 @@ def get_plot_training_compare(
     return plt
 
 
-def get_plot_toxlev2toxlev(deps: dict, lbls: dict, from_to: list[tuple[str]], model_name: str, fig_kwargs: dict = None):
+def get_plot_toxlev2toxlev(
+        deps: dict, 
+        lbls: dict, 
+        from_to: list[tuple[str]], 
+        model_name: str, 
+        fig_kwargs: dict = None,
+        aggregation_fun: Callable = np.nanmean,
+    ):
     """Plot the prompt dependancy level comparing two different training methods. 
     The function selects all generation classified as `from_to[_][0]` by the first model
     and generations classified as `from_to[_][1]` by the second model.
@@ -238,6 +247,7 @@ def get_plot_toxlev2toxlev(deps: dict, lbls: dict, from_to: list[tuple[str]], mo
         from_to (`list[tuple[str]]`): list of tuples. Each tuple contains two string labels.
         model_name (`str`): Name of the model for title.
         fig_kwargs (`dict`, optional): figure kwargs. Defaults to None.
+        aggregation_fun (`Callable`): custom function to aggregate results. Defaults to `numpy.nanmean`.
 
     Returns:
         - `matplotlib.pyplot`: same as description.
@@ -255,6 +265,8 @@ def get_plot_toxlev2toxlev(deps: dict, lbls: dict, from_to: list[tuple[str]], mo
     first_key, second_key = lbls.keys()
     assert [item in lbls[first_key] for item in np.unique([ele[0] for ele in from_to])], f'found key in from_to not in lbls [0 dim].'
     assert [item in lbls[second_key] for item in np.unique([ele[1] for ele in from_to])], f'found key in from_to not in lbls [1 dim].'
+
+    assert isinstance(aggregation_fun, Callable), f'aggregation_fun must be Callable, {type(aggregation_fun)}, given.'
 
     local_palette = diversity_palette[1], diversity_palette[4], diversity_palette[2], diversity_palette[3], diversity_palette[5], diversity_palette[0]
     
@@ -290,7 +302,7 @@ def get_plot_toxlev2toxlev(deps: dict, lbls: dict, from_to: list[tuple[str]], mo
         else: 
             ## first line (start)
             d = deps[first_key][indexes]
-            avgs = np.nanmean(d, axis = 0)
+            avgs = aggregation_fun(d, axis = 0)
             ax.plot(
                 np.arange(0, len(avgs)),
                 avgs,
@@ -313,7 +325,7 @@ def get_plot_toxlev2toxlev(deps: dict, lbls: dict, from_to: list[tuple[str]], mo
                 ))
             )
             d = deps[second_key][indexes]
-            avgs = np.nanmean(d, axis = 0)
+            avgs = aggregation_fun(d, axis = 0)
             ax.plot(
                 np.arange(0, len(avgs)),
                 avgs,
@@ -330,7 +342,7 @@ def get_plot_toxlev2toxlev(deps: dict, lbls: dict, from_to: list[tuple[str]], mo
                 color = color_e, alpha = .12,
             )
 
-    if max(avgs) <= 1.1:
+    if max(avgs) <= 1.1 and aggregation_fun == np.nanmean:
         ax.set_ylim(0.19, 1.1)
     # else:
     #     ax.set_ylim(
