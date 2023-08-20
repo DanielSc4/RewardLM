@@ -9,6 +9,8 @@ from scipy.stats import entropy
 from inseq import FeatureAttributionOutput
 from tqdm import tqdm
 
+from typing import Callable
+
 # plot color palette
 palette = ['#2D3047', '#576490', '#7796CB', '#A3BCF9', '#D1D2F9', '#C9CAD9', '#B7B8C5', '#FCB97D']
 diversity_palette = ['#2D3047', '#7796CB', '#FCB97D', '#E54F6D', '#79C99E', '#A9F0D1',]
@@ -85,7 +87,14 @@ def get_prompt_dependancy(attributions: FeatureAttributionOutput, max_n_tok: int
     return np.array(final)
 
 
-def get_plot_prompt_measure_toxicity(measurements: np.array, attr_labels: np.array, model_name: str, measure_name: str, fig_kwargs: dict = None):
+def get_plot_prompt_measure_toxicity(
+        measurements: np.array, 
+        attr_labels: np.array, 
+        model_name: str, 
+        measure_name: str, 
+        fig_kwargs: dict = None, 
+        aggregation_fun: Callable = np.nanmean
+    ):
     r"""Plot average prompt dependancy | entropy | any metric with shape `(n_attributions, num_of_tokens)` 
     distinguishing between the bucket in `attr_labels`.
 
@@ -95,6 +104,7 @@ def get_plot_prompt_measure_toxicity(measurements: np.array, attr_labels: np.arr
         model_name (`str`): name of the model (title).
         measure_name(`str`): name of the measure (title).
         fig_kwargs (`dict`): figure kwargs. Defaults to None.
+        aggregation_fun (`Callable`): custom function to aggregate results. Defaults to `numpy.nanmean`.
 
     Returns:
         `matplotlib.pyplot`: same as description.
@@ -104,6 +114,8 @@ def get_plot_prompt_measure_toxicity(measurements: np.array, attr_labels: np.arr
     
     if attr_labels[0]:
         assert measurements.shape[0] == len(attr_labels), f"Number of measurements (0 dim of measurements: {measurements.shape[0]}) must be equal to the number of given labels ({len(attr_labels)})"
+
+    assert isinstance(aggregation_fun, Callable)
 
     if not fig_kwargs:
         fig_kwargs = {
@@ -117,7 +129,7 @@ def get_plot_prompt_measure_toxicity(measurements: np.array, attr_labels: np.arr
     for i, (lbl, color) in enumerate(zip(np.unique(attr_labels), local_palette)):
         group = measurements[(attr_labels == np.unique(attr_labels))[:, i]]
 
-        avgs = np.nanmean(group, axis = 0)
+        avgs = aggregation_fun(group, axis = 0)
         
         offsets = _get_offsets_ci(group)
         ax.plot(
@@ -149,7 +161,13 @@ def get_plot_prompt_measure_toxicity(measurements: np.array, attr_labels: np.arr
 
 
 
-def get_plot_training_compare(measurements: dict, model_name:str, measure_name: str, fig_kwargs: dict = None):
+def get_plot_training_compare(
+        measurements: dict, 
+        model_name:str, 
+        measure_name: str, 
+        fig_kwargs: dict = None, 
+        aggregation_fun: Callable = np.nanmean
+    ):
     """Plot prompt dependancy | entropy | any metric with shape `(n_attributions, num_of_tokens)` 
     comparing different type of training, Pre-Trained, Fine-Tuned and Reinforcement Learning.
 
@@ -178,7 +196,7 @@ def get_plot_training_compare(measurements: dict, model_name:str, measure_name: 
     ax.set_title(f'[{model_name}], {measure_name}, PT vs FT vs RL')
 
     for k, color in zip(measurements, local_palette):
-        avgs = np.nanmean(measurements[k], axis = 0)
+        avgs = aggregation_fun(measurements[k], axis = 0)
         offsets = _get_offsets_ci(measurements[k])
 
         ax.plot(
