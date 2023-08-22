@@ -78,7 +78,7 @@ def load_model(model_id: str, load_from_peft: bool):
 
 
 
-def select_prompts(model_config: dict, data_config: dict, start_from: int = 0):
+def select_prompts(model_config: dict, data_config: dict, tokenizer: AutoTokenizer, start_from: int = 0):
     r"""Reads the dataset corresponding to the model's generation and performs all pre-processing specified by the provided interpretability configuration file.
 
     Args:
@@ -128,7 +128,7 @@ def select_prompts(model_config: dict, data_config: dict, start_from: int = 0):
     respones = df['responses'].to_list()
     
     output['generated_texts'] = list(map(
-        lambda prompt, respo: str(prompt) + str(respo) if not pd.isna(respo) and str(respo) else '-', # ensure to not have empty resposnes
+        lambda prompt, respo: str(prompt) + str(respo) if not pd.isna(respo) and str(respo) else str(prompt) + tokenizer.eos_token, # ensure to not have empty resposnes
         output['input_texts'], 
         respones,
         )
@@ -158,7 +158,7 @@ def main(model_config, interp_config, start_from):
         tokenizer=tokenizer,
     )
 
-    inputs = select_prompts(model_config, interp_config['data'], start_from)
+    inputs = select_prompts(model_config, interp_config['data'], tokenizer, start_from)
 
     if start_from > 0:
         path_file_name = interp_config['data']['output_path'] + 'attributes_{model_name}_{it}it.json'.format(model_name = model_config['model_id'].split('/')[-1], it = start_from)
