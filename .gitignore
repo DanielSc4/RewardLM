@@ -91,6 +91,9 @@ credentials.yaml
 # old notebooks folder
 notebooks/*
 
+# media folder
+media/*
+
 # interpretability results (too heavy)
 results/interp_res/attributes_falcon*
 results/interp_res/lbls_falcon*

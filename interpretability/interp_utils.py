@@ -156,7 +156,7 @@ def get_plot_prompt_measure_toxicity(
     ax.set_xlabel(r'$n$ generated tokens')
     ax.set_ylabel('prompt dependancy (sum)')
     ax.grid(alpha = .3, linestyle = ':')
-    return plt
+    return fig
 
 
 
@@ -226,7 +226,7 @@ def get_plot_training_compare(
     ax.legend()
     ax.grid(alpha = .3, linestyle = ':')
     
-    return plt
+    return fig
 
 
 def get_plot_toxlev2toxlev(
@@ -354,7 +354,7 @@ def get_plot_toxlev2toxlev(
     ax.legend()
     ax.grid(alpha = .3, linestyle = ':')
 
-    return plt
+    return fig
 
 
 
@@ -426,7 +426,7 @@ def get_plot_kl(kls: dict, model_name: str, fig_kwargs: dict = None):
     ax.legend()
     ax.grid(alpha = .3, linestyle = ':')
     
-    return plt
+    return fig
 
 
 
@@ -511,7 +511,7 @@ def get_plot_KL_toxlev2toxlev(kls: dict, lbls: dict, from_to: dict[str, list[tup
     ax.legend()
     ax.grid(alpha = .3, linestyle = ':')
 
-    return plt
+    return fig
 
 
 
