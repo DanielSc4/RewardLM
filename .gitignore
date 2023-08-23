@@ -92,6 +92,10 @@ credentials.yaml
 notebooks/*
 
 # interpretability results (too heavy)
-results/interp_res/interpret_models/*
+results/interp_res/attributes_falcon*
+results/interp_res/lbls_falcon*
+results/interp_res/attributes_RedPajama*
+results/interp_res/lbls_RedPajama*
+results/interp_res/extras/*
 # avoid debug attributions backup
 results/interp_res/attributes_gpt-neo-*
