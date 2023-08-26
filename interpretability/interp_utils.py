@@ -534,3 +534,4 @@ def get_prompt_shannon_entropy(attributions: FeatureAttributionOutput, max_n_tok
         entropies.append(entr_per_token)
     
     return np.vstack(entropies)
+
