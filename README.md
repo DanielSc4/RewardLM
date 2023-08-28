@@ -1,24 +1,11 @@
 # 🥞 **RewardLM**
 Reward a Language Model with pancakes 🥞
 
-## `Backlog`:
-- [x] Catch & handle `ValueError: Responses are too short. Make sure they are at least 4 tokens long.` error skipping current batch that generates the anomaly.
-- [x] Add support for checkpointing and tracking [more info](https://huggingface.co/docs/accelerate/usage_guides/tracking).
-- [x] Add support for dynamic batch size based on [Memory Utilities](https://huggingface.co/docs/accelerate/usage_guides/memory) from 🤗 HuggingFace.
-- [x] [fix] Fix short responses behavior (less than 4 tokens) [fix based on `generation_config`, TODO: how the generation change w/ bigger models?]
-- [x] Add support for model's sharing (and backup) on 🤗 HuggingFace hub!
-- [ ] Add possibility of using a reward manager as a reward model, to have more control over the reward system.
-- [ ] Compatibility of ⚖️ ToxicityMeter with other datasets (possibly instructional).
-- [ ] Extend ⚖️ ToxicityMeter compatibility with 🤗 Accelerate.
-- [x] Extend the possibility of managing parameters and configurations to 🥞RLAF.
-- [x] Use of [Inseq](https://github.com/inseq-team/inseq) for analysis and interpretability of generative models at ⚖️ ToxicityMeter.
-
-
 ## **Usage**
-This repository gathers three main modules. Their operation is shared, allowing the training of any generative model following the two main techniques of Reinforcement Learning w/ PPO (🥞 RLAF) and the more classical 👨🏼‍🏫 fine-tune using PEFT techniques. The third module, ⚖️ Toxicity Meter, deals with measuring the toxicity of the responses of the generative model, whether pre-trained or after the 🥞 or 👨🏼‍🏫 process.
+This repository gathers three main modules. Their operation is shared, allowing the training of any generative model following the two main techniques of Reinforcement Learning w/ PPO (🥞 RLAIF) and the more classical 👨🏼‍🏫 fine-tune using PEFT techniques. The third module, ⚖️ Toxicity Meter, deals with measuring the toxicity of the responses of the generative model, whether pre-trained or after the 🥞 or 👨🏼‍🏫 process.
 
 
-### **🥞 Reinforcement Learning with Automatic Feedback (RLAF)**
+### **🥞 Reinforcement Learning from AI Feedback (RLAIF)**
 
 
 This module allows the use of reinforcement learning algorithms (specifically [PPO](https://openai.com/research/openai-baselines-ppo)) to optimise models according to a direction decided by the reward model. The process is similar to [RLHF](https://en.wikipedia.org/wiki/Reinforcement_learning_from_human_feedback) (Reinforcement Learning from Human Feedback) but removes the human component from the loop to automate the process.
@@ -226,6 +213,18 @@ source .venv/bin/activate
 
 
 
+
+## `Backlog`:
+- [x] Catch & handle `ValueError: Responses are too short. Make sure they are at least 4 tokens long.` error skipping current batch that generates the anomaly.
+- [x] Add support for checkpointing and tracking [more info](https://huggingface.co/docs/accelerate/usage_guides/tracking).
+- [x] Add support for dynamic batch size based on [Memory Utilities](https://huggingface.co/docs/accelerate/usage_guides/memory) from 🤗 HuggingFace.
+- [x] [fix] Fix short responses behavior (less than 4 tokens) [fix based on `generation_config`, TODO: how the generation change w/ bigger models?]
+- [x] Add support for model's sharing (and backup) on 🤗 HuggingFace hub!
+- [ ] Add possibility of using a reward manager as a reward model, to have more control over the reward system.
+- [ ] Compatibility of ⚖️ ToxicityMeter with other datasets (possibly instructional).
+- [ ] Extend ⚖️ ToxicityMeter compatibility with 🤗 Accelerate.
+- [x] Extend the possibility of managing parameters and configurations to 🥞RLAF.
+- [x] Use of [Inseq](https://github.com/inseq-team/inseq) for analysis and interpretability of generative models at ⚖️ ToxicityMeter.
 
 
 
