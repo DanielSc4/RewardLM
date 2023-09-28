@@ -102,3 +102,4 @@ results/interp_res/lbls_RedPajama*
 results/interp_res/extras/*
 # avoid debug attributions backup
 results/interp_res/attributes_gpt-neo-*
+data/for_thesis/*

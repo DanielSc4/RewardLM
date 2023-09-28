@@ -195,7 +195,7 @@ def get_plot_training_compare(
         }
     
     fig, ax = plt.subplots(**fig_kwargs)
-    ax.set_title(f'[{model_name}], {measure_name}, PT vs FT vs RL')
+    ax.set_title(f'[{model_name}], {measure_name}, IT vs FT vs RL')
 
     for k, color in zip(measurements, local_palette):
         avgs = aggregation_fun(measurements[k], axis = 0)
